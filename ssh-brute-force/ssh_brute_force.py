@@ -94,7 +94,11 @@ def main():
         sys.exit(1)
     
     # Count total passwords for progress reporting
-    total_passwords = sum(1 for _ in open(password_file, 'r'))
+    try:
+        total_passwords = sum(1 for _ in open(password_file, 'r', errors='ignore'))
+    except UnicodeDecodeError:
+        # Fallback to binary mode if UTF-8 decoding fails
+        total_passwords = sum(1 for _ in open(password_file, 'rb'))
     print(f"[*] Loaded {total_passwords} passwords from {password_file}")
     
     # Set up output file if specified
@@ -115,7 +119,7 @@ def main():
     
     try:
         with ThreadPoolExecutor(max_workers=args.threads) as executor:
-            with open(password_file, 'r') as file:
+            with open(password_file, 'r', errors='ignore') as file:
                 futures = []
                 
                 # Skip to resume point if specified
