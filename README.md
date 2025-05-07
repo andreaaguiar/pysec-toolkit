@@ -16,6 +16,7 @@ PySec Toolkit provides a set of lightweight, efficient, and customizable securit
 | **Hash Cracker** | Dictionary-based hash cracking | • Multiple hash algorithms (MD5, SHA-1, SHA-256, SHA-512)<br>• Performance metrics<br>• Progress tracking |
 | **Directory Enumeration** | Web directory discovery | • Multiple file extension support<br>• Concurrent requests<br>• Status code analysis<br>• Results filtering |
 | **Subdomain Enumeration** | Subdomain discovery tool | • DNS enumeration<br>• Protocol selection (HTTP/HTTPS)<br>• Response analysis<br>• Title extraction |
+| **Web Vulnerability Scanner** | Web application security testing | • XSS detection<br>• SQL injection detection<br>• Open redirect testing<br>• Security header analysis<br>• Directory listing detection |
 
 ## Requirements
 
@@ -23,9 +24,12 @@ PySec Toolkit provides a set of lightweight, efficient, and customizable securit
 - Required Python packages:
 
   - `requests` - For web-based tools
+  - `beautifulsoup4` - For HTML parsing in the web vulnerability scanner
   - `paramiko` - For SSH operations
   - `scapy` - For network scanning
   - `tqdm` - For progress bars
+  - `urllib3` - HTTP client (used by requests)
+  - `dnspython` - For DNS operations in subdomain enumeration
 
 You can install all dependencies using:
 
@@ -58,6 +62,7 @@ Each tool can be used independently and has its own detailed documentation. Plea
 - [Hash Cracker Documentation](./hash-cracker/README.md)
 - [Directory Enumeration Documentation](./directory-enumeration/README.md)
 - [Subdomain Enumeration Documentation](./subdomain-enumeration/README.md)
+- [Web Vulnerability Scanner Documentation](./web-vuln-scanner/README.md)
 
 ## Security and Ethical Considerations
 
@@ -114,6 +119,9 @@ PySec-Toolkit/
 ├── subdomain-enumeration/
 │   ├── subdomain_enumeration.py
 │   └── README.md
+├── web-vuln-scanner/
+│   ├── web_vuln_scanner.py
+│   └── README.md
 ├── README.md
 └── requirements.txt
 ```
@@ -122,11 +130,11 @@ PySec-Toolkit/
 
 Planned features and improvements:
 
-- Add Web Application Vulnerability Scanner
 - Implement automated reporting
 - Create a unified CLI interface for all tools
 - Add GUI interface option
 - Improve cross-platform compatibility
+- Add more comprehensive payload libraries for vulnerability scanning
 
 ## Contributing
 
