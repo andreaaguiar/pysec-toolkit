@@ -2,6 +2,18 @@
 
 A tool for scanning web applications for common security vulnerabilities.
 
+## Requirements
+
+- Python 3.9+
+- requests library (which includes urllib3)
+- beautifulsoup4 library
+
+Install dependencies with:
+
+```bash
+pip3 install requests beautifulsoup4
+```
+
 ## Features
 
 - **XSS Detection**: Identifies Cross-Site Scripting vulnerabilities in URL parameters

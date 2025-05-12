@@ -1,5 +1,12 @@
 # PySec Toolkit
 
+[![Python 3.9+](https://img.shields.io/badge/python-3.7|3.8|3.9|3.10|3.11-blue.svg)](https://www.python.org/downloads/)
+[![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://GitHub.com/andreaaguiar/pysec-toolkit/graphs/commit-activity)
+[![GitHub stars](https://img.shields.io/github/stars/andreaaguiar/pysec-toolkit.svg)](https://GitHub.com/andreaaguiar/pysec-toolkit/stargazers)
+[![Dependabot Updates](https://github.com/andreaaguiar/pysec-toolkit/actions/workflows/dependabot/dependabot-updates/badge.svg)](https://github.com/andreaaguiar/pysec-toolkit/actions/workflows/dependabot/dependabot-updates)
+[![CodeQL](https://github.com/andreaaguiar/pysec-toolkit/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/andreaaguiar/pysec-toolkit/actions/workflows/github-code-scanning/codeql)
+[![Documentation Status](https://img.shields.io/badge/docs-up--to--date-brightgreen.svg)](./README.md)
+
 A collection of security assessment and penetration testing tools written in Python.
 
 ## Overview
@@ -28,8 +35,6 @@ PySec Toolkit provides a set of lightweight, efficient, and customizable securit
   - `paramiko` - For SSH operations
   - `scapy` - For network scanning
   - `tqdm` - For progress bars
-  - `urllib3` - HTTP client (used by requests)
-  - `dnspython` - For DNS operations in subdomain enumeration
 
 You can install all dependencies using:
 
