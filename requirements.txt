@@ -3,7 +3,7 @@ requests~=2.32.4      # For HTTP requests in web scanning and directory/subdomai
 beautifulsoup4~=4.13.4 # For HTML parsing in web vulnerability scanner
 
 # Network and SSH tools
-paramiko~=3.5.1       # For SSH connections in ssh-brute-force tool
+paramiko~=4.0.0       # For SSH connections in ssh-brute-force tool
 scapy~=2.6.1          # For network scanning and ARP operations
 
 # Utility libraries
