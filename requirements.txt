@@ -1,5 +1,5 @@
 # Web-based tool dependencies
-requests~=2.32.4      # For HTTP requests in web scanning and directory/subdomain enumeration
+requests~=2.32.5      # For HTTP requests in web scanning and directory/subdomain enumeration
 beautifulsoup4~=4.13.4 # For HTML parsing in web vulnerability scanner
 
 # Network and SSH tools
