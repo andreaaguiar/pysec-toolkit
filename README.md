@@ -1,6 +1,6 @@
 # PySec Toolkit
 
-[![Python 3.9+](https://img.shields.io/badge/python-3.9|3.10|3.11-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.9+](https://img.shields.io/badge/python-3.9|3.10|3.11|3.12-blue.svg)](https://www.python.org/downloads/)
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://GitHub.com/andreaaguiar/pysec-toolkit/graphs/commit-activity)
 [![GitHub stars](https://img.shields.io/github/stars/andreaaguiar/pysec-toolkit.svg)](https://GitHub.com/andreaaguiar/pysec-toolkit/stargazers)
 [![Dependabot Updates](https://github.com/andreaaguiar/pysec-toolkit/actions/workflows/dependabot/dependabot-updates/badge.svg)](https://github.com/andreaaguiar/pysec-toolkit/actions/workflows/dependabot/dependabot-updates)
