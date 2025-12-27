@@ -27,7 +27,7 @@ PySec Toolkit provides a set of lightweight, efficient, and customizable securit
 
 ## Requirements
 
-- Python 3.9+ (tested with Python 3.9, 3.10, 3.11, 3.12)
+- Python 3.9+
 - Required Python packages:
 
   - `requests` - For web-based tools
