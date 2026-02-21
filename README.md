@@ -16,7 +16,7 @@ PySec Toolkit provides a set of lightweight, efficient, and customizable securit
 ## Tools Included
 
 | Tool | Description | Features |
-|------|-------------|----------|
+| ------ | ------------- | ---------- |
 | **Port Scanner** | TCP port scanning utility | • Multithreaded scanning<br>• Service identification<br>• Customizable port ranges<br>• Progress tracking |
 | **Network Scanner** | Network discovery using ARP | • Host discovery<br>• MAC address resolution<br>• Hardware vendor detection<br>• Results export |
 | **SSH Brute Force** | SSH credential testing tool | • Password list testing<br>• Connection management<br>• Multithreading support<br>• Resume capability |
