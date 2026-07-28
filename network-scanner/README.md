@@ -2,22 +2,21 @@
 
 ## Description
 
-The `network_scanner.py` script is a network discovery tool that uses ARP requests to identify active hosts on a local network. This tool leverages the Scapy library to craft and send packets, making it useful for network mapping and reconnaissance.
+`network_scanner.py` finds active hosts on a local network with ARP requests. It uses the Scapy library to build and send the packets. Use it to map hosts on a network you are authorized to test.
 
 ## Features
 
-- **ARP-based Discovery** - Uses ARP protocol for reliable host detection
-- **Broadcast Scanning** - Sends requests to the entire subnet efficiently
-- **MAC Address Resolution** - Identifies both IP and MAC addresses of targets
-- **Fast Execution** - Quick network mapping with configurable timeout
-- **Progress Indication** - Visual feedback during scanning of large networks
-- **Hardware Vendor Detection** - Identifies vendors from MAC addresses (in verbose mode)
-- **Output File Support** - Save scan results to a text file
-- **Configurable Timeout** - Adjust response wait time for different networks
+- **ARP-based discovery** - Detect hosts with ARP requests
+- **Broadcast scanning** - Send requests to the whole subnet
+- **MAC address resolution** - Report the IP and MAC address of each host
+- **Configurable timeout** - Set the response wait time per network
+- **Progress indication** - Show progress on large networks
+- **Hardware vendor detection** - Name the vendor from the MAC address (verbose mode)
+- **Output file support** - Save results to a text file
 
 ## Requirements
 
-- Python 3.9+
+- Python 3.10+
 - Scapy library
 - tqdm library
 

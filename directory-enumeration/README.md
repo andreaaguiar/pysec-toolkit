@@ -2,31 +2,32 @@
 
 ## Description
 
-The `directory_enumeration.py` script is a powerful web directory discovery tool designed to find hidden or unlinked directories on web servers. The tool works by testing a list of common directory names against a target website and identifying which ones exist.
+`directory_enumeration.py` finds directories and files on a web server. It tests names from a wordlist against the target and reports the ones that exist.
 
 ## Features
 
-- **Multithreaded scanning** - Significantly faster than sequential scanning
-- **Wordlist-based scanning** - Tests directories based on a provided wordlist
-- **Multiple file extensions** - Support for multiple file extensions (.html, .php, .asp, etc.)
-- **Protocol options** - Support for HTTP, HTTPS
-- **Progress tracking** - Real-time progress display with scan speed
-- **Result saving** - Option to save results to a file
-- **Timeout control** - Configurable request timeouts
-- **User-agent customization** - Uses realistic browser user-agent headers
-- **Title extraction** - Extracts and displays webpage titles for valid directories
-- **Colored output** - Visual differentiation of status codes
-- **Verbose mode** - Detailed information including content size
+- **Multithreaded scanning** - Test many paths at once
+- **Wordlist-based scanning** - Test directory names from a wordlist
+- **Multiple file extensions** - Check several extensions (.html, .php, .asp, and more)
+- **Protocol options** - Use HTTP or HTTPS
+- **Progress tracking** - Show progress and request rate
+- **Result saving** - Save results to a file
+- **Timeout control** - Set the request timeout
+- **User-agent customization** - Send a browser user-agent header
+- **Title extraction** - Show the page title for each valid path
+- **Colored output** - Color the status codes
+- **Verbose mode** - Show extra detail such as content size
 
 ## Requirements
 
-- Python 3.9+
+- Python 3.10+
 - Requests library
+- BeautifulSoup library (for title extraction)
 
 Install dependencies with:
 
 ```bash
-pip3 install requests
+pip3 install requests beautifulsoup4
 ```
 
 ## Usage
@@ -90,7 +91,9 @@ After completion:
 
 ## Creating a Wordlist
 
-For effective directory discovery, you should use a comprehensive wordlist. You can:
+A small starter `wordlist.txt` ships with the script, so the default command works without extra setup. It is only a sample. For real assessments, replace it with a large list.
+
+For real directory discovery, use a large wordlist. You can:
 
 1. Use existing wordlists like [SecLists](https://github.com/danielmiessler/SecLists/tree/master/Discovery/Web-Content)
 1. Create your own wordlist based on common web directory names

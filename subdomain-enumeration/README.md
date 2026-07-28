@@ -2,27 +2,28 @@
 
 ## Description
 
-The `subdomain_enumeration.py` script is a powerful and efficient tool for discovering valid subdomains of a target domain. It uses multithreaded requests to check a list of potential subdomains against a specified domain.
+`subdomain_enumeration.py` finds valid subdomains of a target domain. It reads subdomain names from a wordlist and sends a request for each name. It uses multiple threads to check the names faster.
 
 ## Features
 
-- **Multithreaded** - Significantly faster than sequential scanning
-- **Protocol Options** - Support for HTTP, HTTPS, or both
-- **Progress Tracking** - Real-time progress display with scan speed
-- **Result Saving** - Option to save results to a file
-- **Timeout Control** - Configurable request timeouts
-- **User-Agent Customization** - Uses realistic browser user-agent headers
-- **Title Extraction** - Extracts and displays webpage titles for valid domains
+- **Multithreaded** - Check many subdomains at once
+- **Protocol options** - Use HTTP, HTTPS, or both
+- **Progress tracking** - Show progress and request rate
+- **Result saving** - Save results to a file
+- **Timeout control** - Set the request timeout
+- **User-agent customization** - Send a browser user-agent header
+- **Title extraction** - Show the page title for each valid subdomain
 
 ## Requirements
 
-- Python 3.9+
+- Python 3.10+
 - Requests library
+- BeautifulSoup library (for title extraction)
 
 Install dependencies with:
 
 ```bash
-pip3 install requests
+pip3 install requests beautifulsoup4
 ```
 
 ## Usage
@@ -75,7 +76,9 @@ After completion:
 
 ## Creating a Wordlist
 
-For effective subdomain discovery, you need a good wordlist. You can:
+A small starter `wordlist.txt` ships with the script, so the default command works without extra setup. It is only a sample. For real assessments, replace it with a large list.
+
+For real subdomain discovery, use a large wordlist. You can:
 
 1. Use existing wordlists like [SecLists](https://github.com/danielmiessler/SecLists/tree/master/Discovery/DNS)
 1. Create your own wordlist based on common naming patterns

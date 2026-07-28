@@ -2,21 +2,21 @@
 
 ## Description
 
-The `hash_cracker.py` script is a versatile hash cracking utility. It uses a dictionary-based approach to find plaintext passwords corresponding to their hash values, supporting multiple hash algorithms including MD5, SHA-1, SHA-256, and SHA-512.
+`hash_cracker.py` recovers a plaintext password from its hash. It hashes each word in a wordlist and compares the result to the target hash. It supports MD5, SHA-1, SHA-256, and SHA-512.
 
 ## Features
 
-- **Multiple Hash Algorithm Support** - Cracks MD5, SHA-1, SHA-256, and SHA-512 hashes
-- **Wordlist-based cracking** - Tests passwords from a provided wordlist
-- **Command-Line Interface** - Supports both interactive mode and command-line arguments
-- **Progress Tracking** - Shows real-time progress and speed metrics during cracking
-- **Hash Validation** - Verifies that input hashes match the expected format
-- **Error Handling** - Robust error handling for files, permissions, and interruptions
-- **Performance Statistics** - Reports cracking speed and elapsed time
+- **Multiple hash algorithms** - Crack MD5, SHA-1, SHA-256, and SHA-512 hashes
+- **Wordlist-based cracking** - Test passwords from a wordlist
+- **Two run modes** - Pass arguments or use interactive mode
+- **Progress tracking** - Show progress and speed while it runs
+- **Hash validation** - Check that the hash matches the expected format
+- **Error handling** - Handle file, permission, and interrupt errors
+- **Performance statistics** - Report speed and elapsed time
 
 ## Requirements
 
-- Python 3.9+
+- Python 3.10+
 
 ## Usage
 
@@ -70,7 +70,7 @@ The script:
 Starting hash cracking process...
 Hash type: md5
 Wordlist: wordlist.txt
-Progress: 1000/10000 (10.00%) - 5000.25 passwords/sec
+Progress: 10000 tried (12.5%) - 48000 passwords/sec
 Found cleartext password after 1234 attempts!
 Found cleartext password: password
 Time taken: 0.25 seconds
@@ -86,7 +86,7 @@ Enter hash type (md5, sha1, sha256, sha512). Default is md5: md5
 Starting hash cracking process...
 Hash type: md5
 Wordlist: wordlist.txt
-Progress: 1000/10000 (10.00%) - 5000.25 passwords/sec
+Progress: 10000 tried (12.5%) - 48000 passwords/sec
 Found cleartext password after 1234 attempts!
 Found cleartext password: password
 Time taken: 0.25 seconds
@@ -94,10 +94,12 @@ Time taken: 0.25 seconds
 
 ## Wordlist Resources
 
+A small starter `wordlist.txt` ships alongside the script for quick testing. It is only a sample. For real cracking, use one of the larger lists below.
+
 Good password wordlists for hash cracking:
 
 1. RockYou.txt - A classic wordlist containing millions of real passwords
-1. [SecLists - Password Dictionaries](https://github.com/danielmiessler/SecLists/tree/master/Passwords) - Comprehensive collection of password lists
+1. [SecLists - Password Dictionaries](https://github.com/danielmiessler/SecLists/tree/master/Passwords) - Large collection of password lists
 1. [CrackStation Wordlists](https://crackstation.net/crackstation-wordlist-password-cracking-dictionary.htm) - Large-scale password dictionary
 
 ## Performance Tips
@@ -115,4 +117,4 @@ While this script now includes many advanced features, it could be further enhan
 - Implementing hybrid attack modes (combining dictionary + rules)
 - Adding support for rule-based password mutations
 - Implementing resume functionality for interrupted cracking sessions
-- Adding GPU acceleration for significantly faster hash computation
+- Adding GPU acceleration for much faster hash computation

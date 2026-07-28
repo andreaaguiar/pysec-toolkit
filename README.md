@@ -1,23 +1,23 @@
 # PySec Toolkit
 
-[![Python 3.9+](https://img.shields.io/badge/python-3.9|3.10|3.11|3.12-blue.svg)](https://www.python.org/downloads/)
-[![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://GitHub.com/andreaaguiar/pysec-toolkit/graphs/commit-activity)
-[![GitHub stars](https://img.shields.io/github/stars/andreaaguiar/pysec-toolkit.svg)](https://GitHub.com/andreaaguiar/pysec-toolkit/stargazers)
+[![Python >=3.10](https://img.shields.io/badge/python-%3E=3.10-blue.svg)](https://www.python.org/downloads/)
+[![Tests](https://github.com/andreaaguiar/pysec-toolkit/actions/workflows/tests.yml/badge.svg)](https://github.com/andreaaguiar/pysec-toolkit/actions/workflows/tests.yml)
+[![Lint](https://github.com/andreaaguiar/pysec-toolkit/actions/workflows/lint.yml/badge.svg)](https://github.com/andreaaguiar/pysec-toolkit/actions/workflows/lint.yml)
+[![CodeQL](https://github.com/andreaaguiar/pysec-toolkit/actions/workflows/codeql.yml/badge.svg)](https://github.com/andreaaguiar/pysec-toolkit/actions/workflows/codeql.yml)
 [![Dependabot Updates](https://github.com/andreaaguiar/pysec-toolkit/actions/workflows/dependabot/dependabot-updates/badge.svg)](https://github.com/andreaaguiar/pysec-toolkit/actions/workflows/dependabot/dependabot-updates)
-[![CodeQL](https://github.com/andreaaguiar/pysec-toolkit/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/andreaaguiar/pysec-toolkit/actions/workflows/github-code-scanning/codeql)
-[![Documentation Status](https://img.shields.io/badge/docs-up--to--date-brightgreen.svg)](./README.md)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](./LICENSE)
 
 A collection of security assessment and penetration testing tools written in Python.
 
 ## Overview
 
-PySec Toolkit provides a set of lightweight, efficient, and customizable security tools for network reconnaissance, password cracking, and web application testing. Each tool is designed to help security professionals perform targeted security assessments.
+PySec Toolkit is a set of Python security tools for network reconnaissance, password cracking, and web application testing. Each tool runs on its own from the command line. Use them only for authorized assessments.
 
 ## Tools Included
 
 | Tool | Description | Features |
 | ------ | ------------- | ---------- |
-| **Port Scanner** | TCP port scanning utility | • Multithreaded scanning<br>• Service identification<br>• Customizable port ranges<br>• Progress tracking |
+| **Port Scanner** | TCP port scanning utility | • Multithreaded scanning<br>• Service identification<br>• Custom port ranges<br>• Progress tracking |
 | **Network Scanner** | Network discovery using ARP | • Host discovery<br>• MAC address resolution<br>• Hardware vendor detection<br>• Results export |
 | **SSH Brute Force** | SSH credential testing tool | • Password list testing<br>• Connection management<br>• Multithreading support<br>• Resume capability |
 | **Hash Cracker** | Dictionary-based hash cracking | • Multiple hash algorithms (MD5, SHA-1, SHA-256, SHA-512)<br>• Performance metrics<br>• Progress tracking |
@@ -27,7 +27,7 @@ PySec Toolkit provides a set of lightweight, efficient, and customizable securit
 
 ## Requirements
 
-- Python 3.9+
+- Python 3.10+
 - Required Python packages:
 
   - `requests` - For web-based tools
@@ -73,7 +73,7 @@ Each tool can be used independently and has its own detailed documentation. Plea
 
 ### Ethical Use Guidelines
 
-All tools in this repository are designed for:
+Use the tools in this repository only for:
 
 - **Legitimate security assessment** - Only use on systems you own or have explicit permission to test
 - **Educational purposes** - Learn about security concepts in a controlled environment
@@ -106,6 +106,19 @@ If you discover vulnerabilities using these tools:
 
 ```bash
 PySec-Toolkit/
+├── .github/
+│   ├── workflows/
+│   │   ├── codeql.yml
+│   │   ├── lint.yml
+│   │   └── tests.yml
+│   └── dependabot.yml
+├── tests/
+│   ├── conftest.py
+│   ├── test_hash_cracker.py
+│   ├── test_port_scanner.py
+│   ├── test_ssh_brute_force.py
+│   ├── test_title_extraction.py
+│   └── test_web_vuln_scanner.py
 ├── port-scanner/
 │   ├── port_scanner.py
 │   └── README.md
@@ -114,22 +127,54 @@ PySec-Toolkit/
 │   └── README.md
 ├── ssh-brute-force/
 │   ├── ssh_brute_force.py
+│   ├── passwords.txt
 │   └── README.md
 ├── hash-cracker/
 │   ├── hash_cracker.py
+│   ├── wordlist.txt
 │   └── README.md
 ├── directory-enumeration/
 │   ├── directory_enumeration.py
+│   ├── wordlist.txt
 │   └── README.md
 ├── subdomain-enumeration/
 │   ├── subdomain_enumeration.py
+│   ├── wordlist.txt
 │   └── README.md
 ├── web-vuln-scanner/
 │   ├── web_vuln_scanner.py
 │   └── README.md
+├── .gitignore
+├── LICENSE
 ├── README.md
-└── requirements.txt
+├── SECURITY.md
+├── requirements-dev.txt
+├── requirements.txt
+└── ruff.toml
 ```
+
+## Development
+
+Install the development tools ([ruff](https://docs.astral.sh/ruff/) and pytest):
+
+```bash
+pip3 install -r requirements-dev.txt
+```
+
+Run the linter:
+
+```bash
+ruff check .
+```
+
+Run the tests (they also need the runtime dependencies):
+
+```bash
+pip3 install -r requirements.txt
+pytest
+```
+
+GitHub Actions runs ruff and pytest on every push and pull request. The tests need Python 3.10 or newer.
 
 ## Future Development
 
@@ -139,8 +184,14 @@ Planned features and improvements:
 - Create a unified CLI interface for all tools
 - Add GUI interface option
 - Improve cross-platform compatibility
-- Add more comprehensive payload libraries for vulnerability scanning
+- Add larger payload libraries for vulnerability scanning
 
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
+
+To report a security issue in the toolkit, see [SECURITY.md](./SECURITY.md).
+
+## License
+
+This project is licensed under the MIT License. See the [LICENSE](./LICENSE) file for details. Use of these tools is subject to the ethical and legal considerations described above.

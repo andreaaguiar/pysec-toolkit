@@ -2,20 +2,20 @@
 
 ## Description
 
-The `port_scanner.py` script is a powerful and flexible port scanning utility designed for network reconnaissance. It systematically checks for open ports on a target IP address, helping security professionals identify potential entry points in a system.
+`port_scanner.py` scans TCP ports on a target IP address. It reports the open ports and names the common service on each one. Use it to find open entry points during an authorized assessment.
 
 ## Features
 
-- **Flexible Port Range** - Scan all 65,535 TCP ports or specify a custom range
-- **Multithreaded Scanning** - Uses threads to significantly speed up the scanning process
-- **Service Identification** - Identifies common services running on open ports
-- **Progress Tracking** - Shows real-time progress during scanning
-- **Customizable Parameters** - Adjust threads, timeout, port range via command-line arguments
-- **Verbose Mode** - Optional detailed output for troubleshooting
+- **Port range** - Scan all 65,535 TCP ports or a custom range
+- **Multithreaded scanning** - Use many threads to scan faster
+- **Service identification** - Name the common service on each open port
+- **Progress tracking** - Show progress while the scan runs
+- **Command-line options** - Set threads, timeout, and port range
+- **Verbose mode** - Print detailed output for troubleshooting
 
 ## Requirements
 
-- Python 3.9+
+- Python 3.10+
 
 ## Usage
 
@@ -59,7 +59,7 @@ The script works by:
 
 1. Parsing command-line arguments to determine scan parameters
 1. Establishing TCP socket connections to each port in parallel using multiple threads
-1. Setting a customizable timeout for each connection attempt
+1. Setting a timeout for each connection attempt
 1. Capturing successful connections and identifying common services
 1. Displaying real-time progress and open port information
 1. Providing a summary of results when the scan completes
@@ -114,4 +114,4 @@ For more thorough scanning:
 
 ### Error Handling
 
-The scanner includes proper error handling and can be safely interrupted with Ctrl+C at any time.
+The scanner handles errors and stops safely when you press Ctrl+C.
