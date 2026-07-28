@@ -1,0 +1,13 @@
+# Byte-compiled Python
+__pycache__/
+*.py[cod]
+
+# Virtual environments
+.venv/
+venv/
+
+# Pytest cache
+.pytest_cache/
+
+# macOS
+.DS_Store
