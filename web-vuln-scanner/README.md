@@ -1,10 +1,10 @@
 # Web Vulnerability Scanner
 
-A tool for scanning web applications for common security vulnerabilities.
+`web_vuln_scanner.py` scans a web application for common vulnerabilities. It crawls the target site and tests each URL it finds.
 
 ## Requirements
 
-- Python 3.9+
+- Python 3.10+
 - requests library (which includes urllib3)
 - beautifulsoup4 library
 
@@ -16,13 +16,13 @@ pip3 install requests beautifulsoup4
 
 ## Features
 
-- **XSS Detection**: Identifies Cross-Site Scripting vulnerabilities in URL parameters
-- **SQL Injection Detection**: Tests for SQL injection vulnerabilities by sending malicious payloads
-- **Open Redirect Detection**: Identifies open redirect vulnerabilities in web applications
-- **Security Header Analysis**: Checks for missing or misconfigured security headers (HSTS, CSP, X-Frame-Options, X-XSS-Protection, X-Content-Type-Options)
-- **Directory Listing Detection**: Identifies exposed directory listings
-- **Website Crawling**: Automatically discovers and scans all pages on the target website (with configurable depth)
-- **Multi-threaded Vulnerability Scanning**: Performs vulnerability scans in parallel for better performance
+- **XSS detection**: Find reflected Cross-Site Scripting in URL parameters
+- **SQL injection detection**: Send test payloads and check the response for SQL errors
+- **Open redirect detection**: Find open redirects in URL parameters
+- **Security header analysis**: Check for missing security headers (HSTS, CSP, X-Frame-Options, X-XSS-Protection, X-Content-Type-Options)
+- **Directory listing detection**: Find exposed directory listings
+- **Website crawling**: Discover and scan pages on the target site up to a set depth
+- **Multi-threaded scanning**: Test URLs in parallel
 
 ## Usage
 
@@ -43,6 +43,7 @@ python3 web_vuln_scanner.py -u https://example.com -o results.json
 - Website crawling is performed with a maximum depth of 2 levels from the initial URL
 - The tool skips external links and URL fragments (#) during crawling
 - Security headers are checked only on the main target URL
+- If the target URL has no scheme, the scanner assumes `https://`
 
 ## Example
 
@@ -97,7 +98,7 @@ This tool can be used alongside the [CTF-Toolkit](https://github.com/andreaaguia
 
 ```bash
 # First, discover subdomains
-python3 ~/pysec-toolkit/subdomain-enumeration/subdomain_enumeration.py -d example.com -o subdomains.txt
+python3 ~/pysec-toolkit/subdomain-enumeration/subdomain_enumeration.py example.com -o subdomains.txt
 
 # Scan each subdomain for vulnerabilities
 cat subdomains.txt | while read subdomain; do
@@ -105,9 +106,9 @@ cat subdomains.txt | while read subdomain; do
 done
 
 # Use directory enumeration for discovered vulnerable endpoints
-python3 ~/pysec-toolkit/directory-enumeration/directory_enumeration.py -u https://vulnerable-subdomain.example.com -o directories.txt
+python3 ~/pysec-toolkit/directory-enumeration/directory_enumeration.py vulnerable-subdomain.example.com --https -o directories.txt
 ```
 
 ## Disclaimer
 
-This tool should only be used for legitimate security testing with proper authorization. Unauthorized scanning of websites may violate laws and terms of service.
+Use this tool only for authorized security testing. Unauthorized scanning of websites can break laws and terms of service.
