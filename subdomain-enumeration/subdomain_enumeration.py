@@ -1,19 +1,22 @@
-import requests
-import sys
-import os
 import argparse
 import concurrent.futures
+import os
+import sys
 import time
 from datetime import datetime
+
+import requests
+from bs4 import BeautifulSoup
+
 
 def check_domain(subdomain, domain, timeout, protocol):
     """Attempt to connect to a subdomain and return the result"""
     url = f"{protocol}://{subdomain}.{domain}"
-    
+
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
     }
-    
+
     try:
         response = requests.get(url, timeout=timeout, headers=headers, allow_redirects=True)
         return {
@@ -31,14 +34,9 @@ def check_domain(subdomain, domain, timeout, protocol):
 
 def extract_title(html):
     """Extract title from HTML content"""
-    try:
-        start = html.find('<title>')
-        if start != -1:
-            end = html.find('</title>', start)
-            if end != -1:
-                return html[start + 7:end].strip()
-    except:
-        pass
+    soup = BeautifulSoup(html, 'html.parser')
+    if soup.title:
+        return soup.title.get_text(strip=True) or None
     return None
 
 def main():
@@ -52,27 +50,27 @@ def main():
     parser.add_argument('--https', action='store_true', help='Use HTTPS instead of HTTP')
     parser.add_argument('--both-protocols', action='store_true', help='Check both HTTP and HTTPS')
     args = parser.parse_args()
-    
+
     # Validate inputs
     if not args.domain:
         print("Error: You must provide a domain name.")
         sys.exit(1)
-    
+
     if not os.path.exists(args.wordlist):
         print(f"Error: Wordlist file '{args.wordlist}' not found.")
         sys.exit(1)
-    
+
     # Read subdomain list
     try:
-        with open(args.wordlist, 'r') as file:
+        with open(args.wordlist) as file:
             subdomains = [line.strip() for line in file if line.strip()]
     except Exception as e:
         print(f"Error reading wordlist file: {e}")
         sys.exit(1)
-    
+
     print(f"\n[+] Starting subdomain enumeration for {args.domain}")
     print(f"[+] Loaded {len(subdomains)} subdomains to check")
-    
+
     # Determine protocols to check
     protocols = []
     if args.https:
@@ -81,12 +79,12 @@ def main():
         protocols = ['http', 'https']
     else:
         protocols = ['http']
-    
+
     total_checks = len(subdomains) * len(protocols)
     start_time = time.time()
     valid_domains = []
     processed = 0
-    
+
     # Function to update progress
     def update_progress():
         nonlocal processed
@@ -96,17 +94,17 @@ def main():
         domains_per_second = processed / elapsed if elapsed > 0 else 0
         sys.stdout.write(f"\r[+] Progress: {processed}/{total_checks} ({progress:.1f}%) - {domains_per_second:.1f} domains/sec")
         sys.stdout.flush()
-    
+
     # Process domains with thread pool
     with concurrent.futures.ThreadPoolExecutor(max_workers=args.threads) as executor:
         futures = []
-        
+
         for subdomain in subdomains:
             for protocol in protocols:
                 futures.append(
                     executor.submit(check_domain, subdomain, args.domain, args.timeout, protocol)
                 )
-        
+
         for future in concurrent.futures.as_completed(futures):
             result = future.result()
             if result['valid']:
@@ -115,24 +113,24 @@ def main():
                 title_msg = f" - {result['title']}" if result['title'] else ""
                 print(f"\n[+] Valid domain: {result['url']}{status_msg}{title_msg}")
             update_progress()
-    
+
     # Print summary
     elapsed_time = time.time() - start_time
     print(f"\n\n[+] Enumeration completed in {elapsed_time:.2f} seconds")
     print(f"[+] Found {len(valid_domains)} valid subdomains")
-    
+
     # Save results to file if requested
     if args.output and valid_domains:
         try:
             with open(args.output, 'w') as f:
                 f.write(f"# Subdomain enumeration results for {args.domain}\n")
                 f.write(f"# Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
-                
+
                 for domain in valid_domains:
                     status = domain.get('status_code', 'Unknown')
                     title = f" - {domain['title']}" if domain.get('title') else ""
                     f.write(f"{domain['url']} (Status: {status}){title}\n")
-                
+
             print(f"[+] Results saved to {args.output}")
         except Exception as e:
             print(f"[!] Error saving results: {e}")

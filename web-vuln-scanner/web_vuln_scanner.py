@@ -1,12 +1,14 @@
 import argparse
-import urllib.parse
-import sys
-import requests
 import json
-from urllib.parse import urljoin, urlparse
-from concurrent.futures import ThreadPoolExecutor
-from bs4 import BeautifulSoup
+import sys
+import urllib.parse
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
+from urllib.parse import urljoin, urlparse
+
+import requests
+from bs4 import BeautifulSoup
+
 
 class WebVulnScanner:
     """
@@ -14,15 +16,18 @@ class WebVulnScanner:
 
     This class scans a target website for common vulnerabilities including:
     1. XSS (Cross-Site Scripting) vulnerabilities
-    2. SQL Injection vulnerabilities 
+    2. SQL Injection vulnerabilities
     3. Open redirects
     4. Insecure headers
     5. Directory listing
     """
 
     def __init__(self, url, output=None, cookies=None, threads=5, user_agent=None):
+        if not urlparse(url).scheme:
+            url = "https://" + url
+        parsed = urlparse(url)
         self.target_url = url
-        self.base_url = "{0.scheme}://{0.netloc}".format(urlparse(url))
+        self.base_url = f"{parsed.scheme}://{parsed.netloc}"
         self.visited_urls = set()
         self.vulnerable_urls = set()
         self.output_file = output
@@ -35,11 +40,11 @@ class WebVulnScanner:
             "insecure_headers": [],
             "directory_listing": []
         }
-        
+
         # Set up cookies if provided
         if cookies:
             try:
-                with open(cookies, 'r') as f:
+                with open(cookies) as f:
                     cookie_data = f.read().strip()
                     cookie_pairs = cookie_data.split(';')
                     for pair in cookie_pairs:
@@ -48,7 +53,7 @@ class WebVulnScanner:
                             self.cookies[name] = value
             except Exception as e:
                 print(f"Error loading cookies: {e}")
-                
+
         # Set user agent
         self.headers = {
             'User-Agent': user_agent or 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
@@ -57,27 +62,31 @@ class WebVulnScanner:
     def scan(self):
         """Main scanning method that orchestrates the whole process"""
         print(f"[+] Starting scan of {self.target_url} at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-        
+
         # First crawl the site to find URLs
         print("[+] Crawling the website for links...")
         self._crawl_site(self.target_url)
-        
+
         print(f"[+] Found {len(self.visited_urls)} unique URLs")
-        
+
         # Now test each URL for vulnerabilities
         print("[+] Testing for vulnerabilities...")
         with ThreadPoolExecutor(max_workers=self.threads) as executor:
-            for url in self.visited_urls:
-                executor.submit(self._scan_url, url)
-                
+            futures = [executor.submit(self._scan_url, url) for url in self.visited_urls]
+            for future in as_completed(futures):
+                try:
+                    future.result()
+                except Exception as e:
+                    print(f"[-] Error scanning URL: {e}")
+
         # Check for insecure headers
         print("[+] Checking for insecure headers...")
         self._check_security_headers()
-                
+
         # Save results if output file specified
         if self.output_file:
             self._save_results()
-        
+
         # Print summary
         self._print_summary()
         print(f"[+] Scan completed at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
@@ -88,35 +97,35 @@ class WebVulnScanner:
             return
 
         self.visited_urls.add(url)
-        
+
         try:
             response = requests.get(
-                url, 
-                cookies=self.cookies, 
-                headers=self.headers, 
+                url,
+                cookies=self.cookies,
+                headers=self.headers,
                 timeout=10,
                 allow_redirects=True
             )
-            
+
             # Check for directory listing
             if "Index of /" in response.text and response.status_code == 200:
                 self.results["directory_listing"].append({
                     "url": url,
                     "details": "Directory listing detected"
                 })
-                
+
             # Parse the page for links
             soup = BeautifulSoup(response.text, 'html.parser')
             for link in soup.find_all('a', href=True):
                 href = link['href']
                 absolute_url = urljoin(url, href)
-                
+
                 # Filter out external links, parameters, etc.
                 if absolute_url.startswith(self.base_url) and '#' not in absolute_url:
                     if absolute_url not in self.visited_urls:
                         # Limit concurrent crawling by using recursion with reduced depth
                         self._crawl_site(absolute_url, depth-1)
-                    
+
         except Exception as e:
             print(f"[-] Error crawling {url}: {e}")
 
@@ -127,60 +136,84 @@ class WebVulnScanner:
         self._check_open_redirect(url)
 
     def _check_xss(self, url):
-        """Check for XSS vulnerabilities"""
+        """Check for reflected XSS by confirming the payload reflects as live markup"""
         parsed_url = urlparse(url)
         base_url = f"{parsed_url.scheme}://{parsed_url.netloc}{parsed_url.path}"
         query_params = urllib.parse.parse_qs(parsed_url.query)
-        
+
+        if not query_params:
+            return
+
+        marker = "pysecXSS31337"
         xss_payloads = [
-            "<script>alert('XSS')</script>",
-            "<img src=x onerror=alert('XSS')>",
-            "';alert('XSS');//"
+            f"<script>{marker}</script>",
+            f'"><img src=x onerror={marker}>',
+            f"'><svg onload={marker}>",
         ]
-        
-        # If URL has parameters, test each parameter
-        if query_params:
-            for param in query_params:
-                for payload in xss_payloads:
-                    test_params = query_params.copy()
-                    test_params[param] = [payload]
-                    
-                    query_string = urllib.parse.urlencode(test_params, doseq=True)
-                    test_url = f"{base_url}?{query_string}"
-                    
-                    try:
-                        response = requests.get(
-                            test_url, 
-                            cookies=self.cookies, 
-                            headers=self.headers,
-                            timeout=10
-                        )
-                        
-                        if payload in response.text:
-                            self.results["xss"].append({
-                                "url": url,
-                                "parameter": param,
-                                "payload": payload,
-                                "details": "Reflected XSS vulnerability detected"
-                            })
-                            print(f"[!] XSS vulnerability found at {url} in parameter {param}")
-                            break
-                    except Exception as e:
-                        print(f"[-] Error testing XSS at {test_url}: {e}")
+
+        for param in query_params:
+            for payload in xss_payloads:
+                test_params = query_params.copy()
+                test_params[param] = [payload]
+
+                query_string = urllib.parse.urlencode(test_params, doseq=True)
+                test_url = f"{base_url}?{query_string}"
+
+                try:
+                    response = requests.get(
+                        test_url,
+                        cookies=self.cookies,
+                        headers=self.headers,
+                        timeout=10
+                    )
+                except Exception as e:
+                    print(f"[-] Error testing XSS at {test_url}: {e}")
+                    continue
+
+                if marker in response.text and self._reflects_as_markup(response.text, marker):
+                    self.results["xss"].append({
+                        "url": url,
+                        "parameter": param,
+                        "payload": payload,
+                        "details": "Reflected XSS: payload reflected as unescaped markup"
+                    })
+                    print(f"[!] XSS vulnerability found at {url} in parameter {param}")
+                    break
+
+    @staticmethod
+    def _reflects_as_markup(html_text, marker):
+        """Return True if the marker parses as a real script element or event handler."""
+        soup = BeautifulSoup(html_text, 'html.parser')
+
+        # Marker inside an injected <script> element
+        for script in soup.find_all('script'):
+            if marker in script.get_text():
+                return True
+
+        # Marker inside an event-handler attribute (onerror, onload, and similar)
+        for tag in soup.find_all(True):
+            for attr, value in tag.attrs.items():
+                if not attr.lower().startswith('on'):
+                    continue
+                attr_value = ' '.join(value) if isinstance(value, list) else str(value)
+                if marker in attr_value:
+                    return True
+
+        return False
 
     def _check_sql_injection(self, url):
         """Check for SQL injection vulnerabilities"""
         parsed_url = urlparse(url)
         base_url = f"{parsed_url.scheme}://{parsed_url.netloc}{parsed_url.path}"
         query_params = urllib.parse.parse_qs(parsed_url.query)
-        
+
         sql_payloads = [
             "'",
             "' OR '1'='1",
             "1' OR '1'='1' --",
             "' UNION SELECT 1,2,3,4 --"
         ]
-        
+
         sql_errors = [
             "SQL syntax",
             "mysql_fetch_array",
@@ -189,25 +222,25 @@ class WebVulnScanner:
             "Microsoft SQL Native Client error",
             "PostgreSQL query failed"
         ]
-        
+
         # If URL has parameters, test each parameter
         if query_params:
             for param in query_params:
                 for payload in sql_payloads:
                     test_params = query_params.copy()
                     test_params[param] = [payload]
-                    
+
                     query_string = urllib.parse.urlencode(test_params, doseq=True)
                     test_url = f"{base_url}?{query_string}"
-                    
+
                     try:
                         response = requests.get(
-                            test_url, 
-                            cookies=self.cookies, 
+                            test_url,
+                            cookies=self.cookies,
                             headers=self.headers,
                             timeout=10
                         )
-                        
+
                         # Check for SQL errors in response
                         for error in sql_errors:
                             if error in response.text:
@@ -228,18 +261,18 @@ class WebVulnScanner:
         parsed_url = urlparse(url)
         base_url = f"{parsed_url.scheme}://{parsed_url.netloc}{parsed_url.path}"
         query_params = urllib.parse.parse_qs(parsed_url.query)
-        
+
         redirect_payloads = [
             "//example.com",
             "https://example.com",
             "http://example.com"
         ]
-        
+
         redirect_params = [
-            "redirect", "url", "next", "goto", "target", "destination", 
+            "redirect", "url", "next", "goto", "target", "destination",
             "redirect_uri", "redirect_url", "returnUrl"
         ]
-        
+
         # If URL has parameters, test each parameter
         if query_params:
             for param in query_params:
@@ -248,19 +281,19 @@ class WebVulnScanner:
                     for payload in redirect_payloads:
                         test_params = query_params.copy()
                         test_params[param] = [payload]
-                        
+
                         query_string = urllib.parse.urlencode(test_params, doseq=True)
                         test_url = f"{base_url}?{query_string}"
-                        
+
                         try:
                             response = requests.get(
-                                test_url, 
-                                cookies=self.cookies, 
+                                test_url,
+                                cookies=self.cookies,
                                 headers=self.headers,
                                 timeout=10,
                                 allow_redirects=False
                             )
-                            
+
                             if response.status_code in [301, 302, 303, 307, 308]:
                                 location = response.headers.get('Location', '')
                                 if "example.com" in location:
@@ -285,15 +318,15 @@ class WebVulnScanner:
             "X-XSS-Protection": "Missing X-XSS-Protection header",
             "X-Content-Type-Options": "Missing X-Content-Type-Options header"
         }
-        
+
         try:
             response = requests.get(
-                self.target_url, 
-                cookies=self.cookies, 
+                self.target_url,
+                cookies=self.cookies,
                 headers=self.headers,
                 timeout=10
             )
-            
+
             missing_headers = []
             for header, message in security_headers.items():
                 if header not in response.headers:
@@ -301,7 +334,7 @@ class WebVulnScanner:
                         "header": header,
                         "issue": message
                     })
-            
+
             if missing_headers:
                 self.results["insecure_headers"].append({
                     "url": self.target_url,
@@ -346,13 +379,13 @@ def parse_args():
     parser.add_argument('-c', '--cookies', help='File containing cookies (format: name=value; name2=value2)')
     parser.add_argument('-t', '--threads', type=int, default=5, help='Number of threads (default: 5)')
     parser.add_argument('-a', '--user-agent', help='Custom User-Agent string')
-    
+
     return parser.parse_args()
 
 
 if __name__ == "__main__":
     args = parse_args()
-    
+
     scanner = WebVulnScanner(
         url=args.url,
         output=args.output,
@@ -360,7 +393,7 @@ if __name__ == "__main__":
         threads=args.threads,
         user_agent=args.user_agent
     )
-    
+
     try:
         scanner.scan()
     except KeyboardInterrupt:
