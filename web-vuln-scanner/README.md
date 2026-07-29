@@ -16,13 +16,14 @@ pip3 install requests beautifulsoup4
 
 ## Features
 
-- **XSS detection**: Find reflected Cross-Site Scripting in URL parameters
-- **SQL injection detection**: Send test payloads and check the response for SQL errors
+- **XSS detection**: Find reflected Cross-Site Scripting in URL parameters and form fields
+- **SQL injection detection**: Send test payloads to URL parameters and form fields, then check the response for SQL errors
+- **Form testing**: Discover HTML forms during crawling and test each field, using the form GET or POST method
 - **Open redirect detection**: Find open redirects in URL parameters
 - **Security header analysis**: Check for missing security headers (HSTS, CSP, X-Frame-Options, X-XSS-Protection, X-Content-Type-Options)
 - **Directory listing detection**: Find exposed directory listings
 - **Website crawling**: Discover and scan pages on the target site up to a set depth
-- **Multi-threaded scanning**: Test URLs in parallel
+- **Multi-threaded scanning**: Test URLs and forms in parallel
 
 ## Usage
 
@@ -42,6 +43,7 @@ python3 web_vuln_scanner.py -u https://example.com -o results.json
 
 - Website crawling is performed with a maximum depth of 2 levels from the initial URL
 - The tool skips external links and URL fragments (#) during crawling
+- Only forms whose action stays on the target host are tested
 - Security headers are checked only on the main target URL
 - If the target URL has no scheme, the scanner assumes `https://`
 

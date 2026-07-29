@@ -22,6 +22,27 @@ class WebVulnScanner:
     5. Directory listing
     """
 
+    XSS_MARKER = "pysecXSS31337"
+    XSS_PAYLOADS = [
+        f"<script>{XSS_MARKER}</script>",
+        f'"><img src=x onerror={XSS_MARKER}>',
+        f"'><svg onload={XSS_MARKER}>",
+    ]
+    SQL_PAYLOADS = [
+        "'",
+        "' OR '1'='1",
+        "1' OR '1'='1' --",
+        "' UNION SELECT 1,2,3,4 --",
+    ]
+    SQL_ERRORS = [
+        "SQL syntax",
+        "mysql_fetch_array",
+        "ORA-01756",
+        "SQLSTATE[42000]",
+        "Microsoft SQL Native Client error",
+        "PostgreSQL query failed",
+    ]
+
     def __init__(self, url, output=None, cookies=None, threads=5, user_agent=None):
         if not urlparse(url).scheme:
             url = "https://" + url
@@ -30,6 +51,7 @@ class WebVulnScanner:
         self.base_url = f"{parsed.scheme}://{parsed.netloc}"
         self.visited_urls = set()
         self.vulnerable_urls = set()
+        self.forms = []
         self.output_file = output
         self.cookies = {}
         self.threads = threads
@@ -67,10 +89,10 @@ class WebVulnScanner:
         print("[+] Crawling the website for links...")
         self._crawl_site(self.target_url)
 
-        print(f"[+] Found {len(self.visited_urls)} unique URLs")
+        print(f"[+] Found {len(self.visited_urls)} unique URLs and {len(self.forms)} forms")
 
         # Now test each URL for vulnerabilities
-        print("[+] Testing for vulnerabilities...")
+        print("[+] Testing URLs for vulnerabilities...")
         with ThreadPoolExecutor(max_workers=self.threads) as executor:
             futures = [executor.submit(self._scan_url, url) for url in self.visited_urls]
             for future in as_completed(futures):
@@ -78,6 +100,16 @@ class WebVulnScanner:
                     future.result()
                 except Exception as e:
                     print(f"[-] Error scanning URL: {e}")
+
+        # Test each discovered form
+        print("[+] Testing forms for vulnerabilities...")
+        with ThreadPoolExecutor(max_workers=self.threads) as executor:
+            futures = [executor.submit(self._scan_form, form) for form in self.forms]
+            for future in as_completed(futures):
+                try:
+                    future.result()
+                except Exception as e:
+                    print(f"[-] Error scanning form: {e}")
 
         # Check for insecure headers
         print("[+] Checking for insecure headers...")
@@ -126,8 +158,35 @@ class WebVulnScanner:
                         # Limit concurrent crawling by using recursion with reduced depth
                         self._crawl_site(absolute_url, depth-1)
 
+            # Record any same-origin forms on the page
+            for form in soup.find_all('form'):
+                parsed_form = self._parse_form(form, url)
+                if parsed_form and parsed_form not in self.forms:
+                    self.forms.append(parsed_form)
+
         except Exception as e:
             print(f"[-] Error crawling {url}: {e}")
+
+    def _parse_form(self, form, page_url):
+        """Extract the action, method, and named fields from a form element."""
+        action = urljoin(page_url, form.get('action') or page_url)
+        if not action.startswith(self.base_url):
+            return None
+
+        method = (form.get('method') or 'get').strip().lower()
+        if method not in ('get', 'post'):
+            method = 'get'
+
+        fields = {}
+        for field in form.find_all(['input', 'textarea', 'select']):
+            name = field.get('name')
+            if name:
+                fields[name] = field.get('value') or 'test'
+
+        if not fields:
+            return None
+
+        return {'action': action, 'method': method, 'fields': fields}
 
     def _scan_url(self, url):
         """Scan a single URL for multiple vulnerabilities"""
@@ -144,15 +203,8 @@ class WebVulnScanner:
         if not query_params:
             return
 
-        marker = "pysecXSS31337"
-        xss_payloads = [
-            f"<script>{marker}</script>",
-            f'"><img src=x onerror={marker}>',
-            f"'><svg onload={marker}>",
-        ]
-
         for param in query_params:
-            for payload in xss_payloads:
+            for payload in self.XSS_PAYLOADS:
                 test_params = query_params.copy()
                 test_params[param] = [payload]
 
@@ -170,7 +222,7 @@ class WebVulnScanner:
                     print(f"[-] Error testing XSS at {test_url}: {e}")
                     continue
 
-                if marker in response.text and self._reflects_as_markup(response.text, marker):
+                if self.XSS_MARKER in response.text and self._reflects_as_markup(response.text, self.XSS_MARKER):
                     self.results["xss"].append({
                         "url": url,
                         "parameter": param,
@@ -201,60 +253,53 @@ class WebVulnScanner:
 
         return False
 
+    @classmethod
+    def _response_sql_error(cls, text):
+        """Return the first known SQL error signature found in the text, or None."""
+        for error in cls.SQL_ERRORS:
+            if error in text:
+                return error
+        return None
+
     def _check_sql_injection(self, url):
         """Check for SQL injection vulnerabilities"""
         parsed_url = urlparse(url)
         base_url = f"{parsed_url.scheme}://{parsed_url.netloc}{parsed_url.path}"
         query_params = urllib.parse.parse_qs(parsed_url.query)
 
-        sql_payloads = [
-            "'",
-            "' OR '1'='1",
-            "1' OR '1'='1' --",
-            "' UNION SELECT 1,2,3,4 --"
-        ]
+        if not query_params:
+            return
 
-        sql_errors = [
-            "SQL syntax",
-            "mysql_fetch_array",
-            "ORA-01756",
-            "SQLSTATE[42000]",
-            "Microsoft SQL Native Client error",
-            "PostgreSQL query failed"
-        ]
+        for param in query_params:
+            for payload in self.SQL_PAYLOADS:
+                test_params = query_params.copy()
+                test_params[param] = [payload]
 
-        # If URL has parameters, test each parameter
-        if query_params:
-            for param in query_params:
-                for payload in sql_payloads:
-                    test_params = query_params.copy()
-                    test_params[param] = [payload]
+                query_string = urllib.parse.urlencode(test_params, doseq=True)
+                test_url = f"{base_url}?{query_string}"
 
-                    query_string = urllib.parse.urlencode(test_params, doseq=True)
-                    test_url = f"{base_url}?{query_string}"
+                try:
+                    response = requests.get(
+                        test_url,
+                        cookies=self.cookies,
+                        headers=self.headers,
+                        timeout=10
+                    )
+                except Exception as e:
+                    print(f"[-] Error testing SQL injection at {test_url}: {e}")
+                    continue
 
-                    try:
-                        response = requests.get(
-                            test_url,
-                            cookies=self.cookies,
-                            headers=self.headers,
-                            timeout=10
-                        )
-
-                        # Check for SQL errors in response
-                        for error in sql_errors:
-                            if error in response.text:
-                                self.results["sqli"].append({
-                                    "url": url,
-                                    "parameter": param,
-                                    "payload": payload,
-                                    "error": error,
-                                    "details": "Possible SQL injection detected"
-                                })
-                                print(f"[!] SQL injection vulnerability found at {url} in parameter {param}")
-                                break
-                    except Exception as e:
-                        print(f"[-] Error testing SQL injection at {test_url}: {e}")
+                error = self._response_sql_error(response.text)
+                if error:
+                    self.results["sqli"].append({
+                        "url": url,
+                        "parameter": param,
+                        "payload": payload,
+                        "error": error,
+                        "details": "Possible SQL injection detected"
+                    })
+                    print(f"[!] SQL injection vulnerability found at {url} in parameter {param}")
+                    break
 
     def _check_open_redirect(self, url):
         """Check for open redirect vulnerabilities"""
@@ -308,6 +353,77 @@ class WebVulnScanner:
                                     break
                         except Exception as e:
                             print(f"[-] Error testing open redirect at {test_url}: {e}")
+
+    def _scan_form(self, form):
+        """Test a single form for XSS and SQL injection"""
+        self._check_form_xss(form)
+        self._check_form_sqli(form)
+
+    def _submit_form(self, form, data):
+        """Submit a form with the given field data and return the response, or None."""
+        try:
+            if form['method'] == 'post':
+                return requests.post(
+                    form['action'],
+                    data=data,
+                    cookies=self.cookies,
+                    headers=self.headers,
+                    timeout=10
+                )
+            return requests.get(
+                form['action'],
+                params=data,
+                cookies=self.cookies,
+                headers=self.headers,
+                timeout=10
+            )
+        except Exception as e:
+            print(f"[-] Error submitting form to {form['action']}: {e}")
+            return None
+
+    def _check_form_xss(self, form):
+        """Inject XSS payloads into each form field and confirm live reflection"""
+        for field in form['fields']:
+            for payload in self.XSS_PAYLOADS:
+                data = dict(form['fields'])
+                data[field] = payload
+
+                response = self._submit_form(form, data)
+                if response is None:
+                    continue
+
+                if self.XSS_MARKER in response.text and self._reflects_as_markup(response.text, self.XSS_MARKER):
+                    self.results["xss"].append({
+                        "url": form['action'],
+                        "parameter": field,
+                        "payload": payload,
+                        "details": f"Reflected XSS in {form['method'].upper()} form field"
+                    })
+                    print(f"[!] XSS vulnerability found in form at {form['action']} in field {field}")
+                    break
+
+    def _check_form_sqli(self, form):
+        """Inject SQL payloads into each form field and check for SQL errors"""
+        for field in form['fields']:
+            for payload in self.SQL_PAYLOADS:
+                data = dict(form['fields'])
+                data[field] = payload
+
+                response = self._submit_form(form, data)
+                if response is None:
+                    continue
+
+                error = self._response_sql_error(response.text)
+                if error:
+                    self.results["sqli"].append({
+                        "url": form['action'],
+                        "parameter": field,
+                        "payload": payload,
+                        "error": error,
+                        "details": f"Possible SQL injection in {form['method'].upper()} form field"
+                    })
+                    print(f"[!] SQL injection vulnerability found in form at {form['action']} in field {field}")
+                    break
 
     def _check_security_headers(self):
         """Check for missing security headers"""
@@ -363,6 +479,7 @@ class WebVulnScanner:
         print("\n--- SCAN SUMMARY ---")
         print(f"Target URL: {self.target_url}")
         print(f"URLs scanned: {len(self.visited_urls)}")
+        print(f"Forms tested: {len(self.forms)}")
         print(f"XSS vulnerabilities: {len(self.results['xss'])}")
         print(f"SQL injection vulnerabilities: {len(self.results['sqli'])}")
         print(f"Open redirect vulnerabilities: {len(self.results['open_redirect'])}")
