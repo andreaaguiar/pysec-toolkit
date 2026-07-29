@@ -3,7 +3,7 @@
 [![Python >=3.10](https://img.shields.io/badge/python-%3E=3.10-blue.svg)](https://www.python.org/downloads/)
 [![Tests](https://github.com/andreaaguiar/pysec-toolkit/actions/workflows/tests.yml/badge.svg)](https://github.com/andreaaguiar/pysec-toolkit/actions/workflows/tests.yml)
 [![Lint](https://github.com/andreaaguiar/pysec-toolkit/actions/workflows/lint.yml/badge.svg)](https://github.com/andreaaguiar/pysec-toolkit/actions/workflows/lint.yml)
-[![CodeQL](https://github.com/andreaaguiar/pysec-toolkit/actions/workflows/codeql.yml/badge.svg)](https://github.com/andreaaguiar/pysec-toolkit/actions/workflows/codeql.yml)
+[![CodeQL](https://github.com/andreaaguiar/pysec-toolkit/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/andreaaguiar/pysec-toolkit/actions/workflows/github-code-scanning/codeql)
 [![Dependabot Updates](https://github.com/andreaaguiar/pysec-toolkit/actions/workflows/dependabot/dependabot-updates/badge.svg)](https://github.com/andreaaguiar/pysec-toolkit/actions/workflows/dependabot/dependabot-updates)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](./LICENSE)
 
@@ -108,7 +108,6 @@ If you discover vulnerabilities using these tools:
 PySec-Toolkit/
 ├── .github/
 │   ├── workflows/
-│   │   ├── codeql.yml
 │   │   ├── lint.yml
 │   │   └── tests.yml
 │   └── dependabot.yml
