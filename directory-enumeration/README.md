@@ -35,14 +35,16 @@ pip3 install requests beautifulsoup4
 Basic usage:
 
 ```bash
-python3 directory_enumeration.py target-domain.com
+python3 pysec.py dir target-domain.com
 ```
 
 Extended usage with options:
 
 ```bash
-python3 directory_enumeration.py example.com -w custom_wordlist.txt -t 20 --https -x ".html,.php,.txt,/" -o results.txt -v
+python3 pysec.py dir example.com -w custom_wordlist.txt -T 20 --https -x ".html,.php,.txt,/" -o results.txt -v
 ```
+
+Or standalone with `python3 directory-enumeration/directory_enumeration.py target-domain.com`.
 
 ## Command-line Options
 
@@ -50,7 +52,7 @@ python3 directory_enumeration.py example.com -w custom_wordlist.txt -t 20 --http
 |--------|-------------|---------|
 | `target` | Target domain or URL to scan (e.g., example.com) | Required |
 | `-w, --wordlist` | Wordlist file containing directories to check | wordlist.txt |
-| `-t, --threads` | Number of concurrent threads | 10 |
+| `-T, --threads` | Number of concurrent threads | 10 |
 | `--timeout` | Request timeout in seconds | 3 |
 | `-o, --output` | Save results to this file | None (results displayed in terminal) |
 | `--https` | Use HTTPS instead of HTTP | False (HTTP) |

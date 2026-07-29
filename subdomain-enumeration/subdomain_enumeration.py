@@ -39,18 +39,17 @@ def extract_title(html):
         return soup.title.get_text(strip=True) or None
     return None
 
-def main():
-    # Parse command line arguments
-    parser = argparse.ArgumentParser(description='Subdomain enumeration tool')
+def add_arguments(parser):
     parser.add_argument('domain', help='Target domain to scan (e.g. example.com)')
     parser.add_argument('-w', '--wordlist', default='wordlist.txt', help='Wordlist file containing subdomains to check')
-    parser.add_argument('-t', '--threads', type=int, default=10, help='Number of concurrent threads (default: 10)')
+    parser.add_argument('-T', '--threads', type=int, default=10, help='Number of concurrent threads (default: 10)')
     parser.add_argument('--timeout', type=float, default=5, help='Request timeout in seconds (default: 5)')
     parser.add_argument('-o', '--output', help='Save results to this file')
     parser.add_argument('--https', action='store_true', help='Use HTTPS instead of HTTP')
     parser.add_argument('--both-protocols', action='store_true', help='Check both HTTP and HTTPS')
-    args = parser.parse_args()
 
+
+def run(args):
     # Validate inputs
     if not args.domain:
         print("Error: You must provide a domain name.")
@@ -134,6 +133,12 @@ def main():
             print(f"[+] Results saved to {args.output}")
         except Exception as e:
             print(f"[!] Error saving results: {e}")
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(description='Subdomain enumeration tool')
+    add_arguments(parser)
+    run(parser.parse_args(argv))
+
 
 if __name__ == "__main__":
     try:

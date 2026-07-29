@@ -488,34 +488,37 @@ class WebVulnScanner:
         print("-------------------\n")
 
 
-def parse_args():
-    """Parse command line arguments"""
-    parser = argparse.ArgumentParser(description='Web Vulnerability Scanner')
-    parser.add_argument('-u', '--url', required=True, help='Target URL to scan')
+def add_arguments(parser):
+    parser.add_argument('target', help='Target URL to scan')
     parser.add_argument('-o', '--output', help='Output file for results (JSON format)')
     parser.add_argument('-c', '--cookies', help='File containing cookies (format: name=value; name2=value2)')
-    parser.add_argument('-t', '--threads', type=int, default=5, help='Number of threads (default: 5)')
+    parser.add_argument('-T', '--threads', type=int, default=5, help='Number of threads (default: 5)')
     parser.add_argument('-a', '--user-agent', help='Custom User-Agent string')
 
-    return parser.parse_args()
 
-
-if __name__ == "__main__":
-    args = parse_args()
-
+def run(args):
     scanner = WebVulnScanner(
-        url=args.url,
+        url=args.target,
         output=args.output,
         cookies=args.cookies,
         threads=args.threads,
         user_agent=args.user_agent
     )
+    scanner.scan()
 
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(description='Web Vulnerability Scanner')
+    add_arguments(parser)
     try:
-        scanner.scan()
+        run(parser.parse_args(argv))
     except KeyboardInterrupt:
         print("\n[!] Scan interrupted by user")
         sys.exit(1)
     except Exception as e:
         print(f"[!] An error occurred: {e}")
         sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()

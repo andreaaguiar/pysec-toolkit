@@ -36,12 +36,6 @@ PySec Toolkit is a set of Python security tools for network reconnaissance, pass
   - `scapy` - For network scanning
   - `tqdm` - For progress bars
 
-You can install all dependencies using:
-
-```bash
-pip3 install -r requirements.txt
-```
-
 ## Installation
 
 Clone the repository:
@@ -56,6 +50,35 @@ Install dependencies:
 ```bash
 pip3 install -r requirements.txt
 ```
+
+## Usage
+
+Run any tool through the `pysec` command, one subcommand per tool:
+
+```bash
+python3 pysec.py <tool> [options]
+```
+
+Examples:
+
+```bash
+python3 pysec.py port 192.168.1.10 -p 1-1000
+python3 pysec.py net 192.168.1.0/24
+python3 pysec.py ssh 192.168.1.10 -u root -w passwords.txt
+python3 pysec.py hash -H <hash> -w wordlist.txt --type md5
+python3 pysec.py dir example.com -w wordlist.txt
+python3 pysec.py subdomain example.com -w wordlist.txt
+python3 pysec.py web https://example.com -o results.json
+```
+
+The shared options mean the same thing across tools: the target is the first
+positional argument (where one applies), `-T/--threads` sets the thread count,
+`--timeout` sets the request timeout, `-o/--output` writes results to a file,
+`-w/--wordlist` gives the wordlist or password list, and `-v/--verbose` adds
+detail. Run `python3 pysec.py <tool> -h` for the full option list.
+
+Each tool also still runs on its own, for example
+`python3 port-scanner/port_scanner.py 192.168.1.10 -p 1-1000`.
 
 ## Documentation
 
@@ -147,6 +170,7 @@ PySec-Toolkit/
 ├── LICENSE
 ├── README.md
 ├── SECURITY.md
+├── pysec.py
 ├── requirements-dev.txt
 ├── requirements.txt
 └── ruff.toml
@@ -180,9 +204,7 @@ GitHub Actions runs ruff and pytest on every push and pull request. The tests ne
 Planned features and improvements:
 
 - Implement automated reporting
-- Create a unified CLI interface for all tools
 - Add GUI interface option
-- Improve cross-platform compatibility
 - Add larger payload libraries for vulnerability scanning
 
 ## Contributing

@@ -10,12 +10,10 @@ from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
 import paramiko
 
 
-def parse_args():
-    """Parse command line arguments."""
-    parser = argparse.ArgumentParser(description='SSH Brute Force Tool')
-    parser.add_argument('-t', '--target', help='Target IP address')
+def add_arguments(parser):
+    parser.add_argument('target', nargs='?', help='Target IP address')
     parser.add_argument('-u', '--username', help='Username to bruteforce')
-    parser.add_argument('-p', '--password-file', help='Path to password file')
+    parser.add_argument('-w', '--wordlist', help='Path to the password file')
     parser.add_argument('-P', '--port', type=int, default=22, help='SSH port (default: 22)')
     parser.add_argument('-T', '--threads', type=int, default=4, help='Number of threads (default: 4)')
     parser.add_argument('-d', '--delay', type=float, default=0, help='Delay between attempts in seconds (default: 0)')
@@ -23,7 +21,6 @@ def parse_args():
     parser.add_argument('-o', '--output', help='Output file for results')
     parser.add_argument('--timeout', type=int, default=5, help='Connection timeout in seconds (default: 5)')
     parser.add_argument('--resume', help='Resume from a specific line number in password file')
-    return parser.parse_args()
 
 def ssh_connect(target, port, username, password, timeout=5, code=0):
     """Try to connect to target using SSH with the given credentials."""
@@ -89,14 +86,12 @@ def handle_interrupt(passwords_tried, current_password, output_file=None):
     print("[*] You can resume later using --resume option")
     sys.exit(1)
 
-def main():
-    """Main function to execute the brute force attack."""
-    args = parse_args()
-
+def run(args):
+    """Execute the brute force attack."""
     # Interactively get parameters if not provided via command line
     target = args.target if args.target else input('Please enter target IP address: ')
     username = args.username if args.username else input('Please enter username to bruteforce: ')
-    password_file = args.password_file if args.password_file else input('Please enter location of the password file: ')
+    password_file = args.wordlist if args.wordlist else input('Please enter location of the password file: ')
 
     # Validate input file
     if not os.path.isfile(password_file):
@@ -203,6 +198,13 @@ def main():
 
     except KeyboardInterrupt:
         handle_interrupt(passwords_tried, current_password, output_file)
+
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(description='SSH Brute Force Tool')
+    add_arguments(parser)
+    run(parser.parse_args(argv))
+
 
 if __name__ == "__main__":
     main()

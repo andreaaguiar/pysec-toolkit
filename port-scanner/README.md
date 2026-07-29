@@ -19,18 +19,26 @@
 
 ## Usage
 
+Through the toolkit command:
+
 ```bash
-python3 port_scanner.py -t TARGET_IP [options]
+python3 pysec.py port TARGET_IP [options]
+```
+
+Or standalone:
+
+```bash
+python3 port_scanner.py TARGET_IP [options]
 ```
 
 ### Command-line Options
 
 | Option | Description | Default |
 |--------|-------------|---------|
-| `-t, --target` | Target IP address (required) | Required |
+| `target` | Target IP address (required) | Required |
 | `-p, --ports` | Port range to scan (e.g., 1-1000) | 1-65535 |
-| `-th, --threads` | Number of threads to use | 100 |
-| `-to, --timeout` | Timeout in seconds for each port | 0.5 |
+| `-T, --threads` | Number of threads to use | 100 |
+| `--timeout` | Timeout in seconds for each port | 0.5 |
 | `-v, --verbose` | Enable verbose output | False |
 
 ### Examples
@@ -38,19 +46,19 @@ python3 port_scanner.py -t TARGET_IP [options]
 Scan all ports on a target:
 
 ```bash
-python3 port_scanner.py -t 192.168.1.6
+python3 pysec.py port 192.168.1.6
 ```
 
 Scan specific port range with more threads:
 
 ```bash
-python3 port_scanner.py -t 192.168.1.6 -p 1-1000 -th 200
+python3 pysec.py port 192.168.1.6 -p 1-1000 -T 200
 ```
 
 Quick scan with shorter timeout:
 
 ```bash
-python3 port_scanner.py -t 192.168.1.6 -p 1-1000 -to 0.2
+python3 pysec.py port 192.168.1.6 -p 1-1000 --timeout 0.2
 ```
 
 ## How It Works
@@ -104,13 +112,13 @@ The scanner automatically identifies common services running on standard ports, 
 For faster scanning:
 
 - Reduce the port range with `-p 1-1000`
-- Increase thread count with `-th 200`
-- Reduce timeout with `-to 0.3`
+- Increase thread count with `-T 200`
+- Reduce timeout with `--timeout 0.3`
 
 For more thorough scanning:
 
 - Scan all ports with default `-p 1-65535`
-- Use longer timeout with `-to 1.0`
+- Use longer timeout with `--timeout 1.0`
 
 ### Error Handling
 

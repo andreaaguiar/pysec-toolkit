@@ -30,14 +30,12 @@ common_services = {
 }
 
 
-def parse_args():
-    parser = argparse.ArgumentParser(description='Port Scanner')
-    parser.add_argument('-t', '--target', help='Target IP address', required=True)
+def add_arguments(parser):
+    parser.add_argument('target', help='Target IP address')
     parser.add_argument('-p', '--ports', help='Port range to scan (e.g. 1-1000)', default='1-65535')
-    parser.add_argument('-th', '--threads', help='Number of threads to use', type=int, default=100)
-    parser.add_argument('-to', '--timeout', help='Timeout in seconds for each port', type=float, default=0.5)
+    parser.add_argument('-T', '--threads', help='Number of threads to use', type=int, default=100)
+    parser.add_argument('--timeout', help='Timeout in seconds for each port', type=float, default=0.5)
     parser.add_argument('-v', '--verbose', help='Verbose output', action='store_true')
-    return parser.parse_args()
 
 
 def parse_ports(ports_str):
@@ -60,9 +58,7 @@ def probe_port(ip, port, timeout):
         return False
 
 
-def main():
-    args = parse_args()
-
+def run(args):
     ip = args.target
     open_ports = []
     print_lock = threading.Lock()
@@ -113,6 +109,12 @@ def main():
         print(f"Total: {len(open_ports)} open ports found")
     else:
         print("No open ports found.")
+
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(description='Port Scanner')
+    add_arguments(parser)
+    run(parser.parse_args(argv))
 
 
 if __name__ == "__main__":

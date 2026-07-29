@@ -22,10 +22,10 @@
 
 ### Interactive Mode
 
-Run the script in interactive mode:
+Run in interactive mode:
 
 ```bash
-python3 hash_cracker.py -i
+python3 pysec.py hash -i
 ```
 
 When prompted:
@@ -36,11 +36,13 @@ When prompted:
 
 ### Command-Line Mode
 
-Run the script with command-line arguments:
+Run with command-line arguments:
 
 ```bash
-python3 hash_cracker.py -w /path/to/wordlist.txt -H <hash-to-crack> -t <hash-type>
+python3 pysec.py hash -w /path/to/wordlist.txt -H <hash-to-crack> --type <hash-type>
 ```
+
+Or standalone with `python3 hash-cracker/hash_cracker.py -w ... -H ...`.
 
 #### Command-line Options
 
@@ -48,7 +50,7 @@ python3 hash_cracker.py -w /path/to/wordlist.txt -H <hash-to-crack> -t <hash-typ
 |--------|-------------|---------|
 | `-w, --wordlist` | Path to the wordlist file | Required |
 | `-H, --hash` | Hash to crack | Required |
-| `-t, --type` | Hash type (md5, sha1, sha256, sha512) | md5 |
+| `--type` | Hash type (md5, sha1, sha256, sha512) | md5 |
 | `-i, --interactive` | Run in interactive mode | False |
 
 ## How It Works
