@@ -28,15 +28,17 @@ pip3 install requests beautifulsoup4
 ## Usage
 
 ```bash
-python3 web_vuln_scanner.py -u https://example.com -o results.json
+python3 pysec.py web https://example.com -o results.json
 ```
+
+Or standalone with `python3 web-vuln-scanner/web_vuln_scanner.py https://example.com -o results.json`.
 
 ### Options
 
-- `-u, --url`: Target URL to scan (required)
+- `target`: Target URL to scan (required)
 - `-o, --output`: Output file for results in JSON format
 - `-c, --cookies`: File containing cookies (format: name=value; name2=value2)
-- `-t, --threads`: Number of threads (default: 5)
+- `-T, --threads`: Number of threads (default: 5)
 - `-a, --user-agent`: Custom User-Agent string
 
 ### Default Behavior
@@ -52,7 +54,7 @@ python3 web_vuln_scanner.py -u https://example.com -o results.json
 Scan a website with custom cookies and save results:
 
 ```bash
-python3 web_vuln_scanner.py -u https://example.com -c cookies.txt -o scan_results.json
+python3 pysec.py web https://example.com -c cookies.txt -o scan_results.json
 ```
 
 ### Output Format
@@ -100,15 +102,15 @@ This tool can be used alongside the [CTF-Toolkit](https://github.com/andreaaguia
 
 ```bash
 # First, discover subdomains
-python3 ~/pysec-toolkit/subdomain-enumeration/subdomain_enumeration.py example.com -o subdomains.txt
+python3 ~/pysec-toolkit/pysec.py subdomain example.com -o subdomains.txt
 
 # Scan each subdomain for vulnerabilities
 cat subdomains.txt | while read subdomain; do
-    python3 ~/pysec-toolkit/web-vuln-scanner/web_vuln_scanner.py -u "https://$subdomain" -o "${subdomain}-vulns.json"
+    python3 ~/pysec-toolkit/pysec.py web "https://$subdomain" -o "${subdomain}-vulns.json"
 done
 
 # Use directory enumeration for discovered vulnerable endpoints
-python3 ~/pysec-toolkit/directory-enumeration/directory_enumeration.py vulnerable-subdomain.example.com --https -o directories.txt
+python3 ~/pysec-toolkit/pysec.py dir vulnerable-subdomain.example.com --https -o directories.txt
 ```
 
 ## Disclaimer

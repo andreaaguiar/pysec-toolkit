@@ -25,25 +25,27 @@ pip3 install paramiko
 
 ## Usage
 
-Run the script with prompts:
+Run with prompts:
 
 ```bash
-python3 ssh_brute_force.py
+python3 pysec.py ssh
 ```
 
 Or pass the details as flags:
 
 ```bash
-python3 ssh_brute_force.py -t 192.168.1.10 -u admin -p passwords.txt -T 8
+python3 pysec.py ssh 192.168.1.10 -u admin -w passwords.txt -T 8
 ```
+
+Each tool also runs standalone, for example `python3 ssh-brute-force/ssh_brute_force.py 192.168.1.10 -u admin -w passwords.txt`.
 
 ### Command-line Options
 
 | Option | Description | Default |
 |--------|-------------|---------|
-| `-t, --target` | Target IP address | Prompt |
+| `target` | Target IP address | Prompt |
 | `-u, --username` | Username to test | Prompt |
-| `-p, --password-file` | Path to the password file | Prompt |
+| `-w, --wordlist` | Path to the password file | Prompt |
 | `-P, --port` | SSH port | 22 |
 | `-T, --threads` | Number of threads | 4 |
 | `-d, --delay` | Delay between attempts in seconds | 0 |

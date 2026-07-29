@@ -8,20 +8,17 @@ from scapy.all import ARP, Ether, conf, srp
 from tqdm import tqdm
 
 
-def parse_arguments():
-    """Parse command line arguments"""
-    parser = argparse.ArgumentParser(description='Network Scanner - Discover active hosts using ARP requests')
+def add_arguments(parser):
+    parser.add_argument('target', nargs='?', default='192.168.1.0/24',
+                        help='IP range to scan in CIDR notation (default: 192.168.1.0/24)')
     parser.add_argument('-i', '--interface', type=str, default=None,
                         help='Network interface to use (default: auto-detect)')
-    parser.add_argument('-r', '--range', type=str, default="192.168.1.0/24",
-                        help='IP range to scan in CIDR notation (default: 192.168.1.0/24)')
-    parser.add_argument('-t', '--timeout', type=float, default=2,
+    parser.add_argument('--timeout', type=float, default=2,
                         help='Timeout for responses in seconds (default: 2)')
     parser.add_argument('-o', '--output', type=str,
                         help='Save results to the specified file')
     parser.add_argument('-v', '--verbose', action='store_true',
                         help='Enable verbose output')
-    return parser.parse_args()
 
 def get_default_interface():
     """Auto-detect the default interface to use"""
@@ -129,23 +126,19 @@ def save_to_file(filename, scan_results):
     except Exception as e:
         print(f"[!] Error saving results to file: {e}")
 
-def main():
-    """Main function"""
-    # Parse arguments
-    args = parse_arguments()
-
-    # Set interface
+def run(args):
     interface = args.interface if args.interface else get_default_interface()
-
-    # Perform scan
-    scan_results = scan_network(interface, args.range, args.timeout)
-
-    # Display results
+    scan_results = scan_network(interface, args.target, args.timeout)
     display_results(scan_results, args.verbose)
-
-    # Save results if output file specified
     if args.output:
         save_to_file(args.output, scan_results)
+
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(description='Network Scanner - Discover active hosts using ARP requests')
+    add_arguments(parser)
+    run(parser.parse_args(argv))
+
 
 if __name__ == "__main__":
     try:

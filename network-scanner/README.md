@@ -31,16 +31,18 @@ Note: Scapy may require additional dependencies based on your operating system.
 ## Usage
 
 ```bash
-sudo python3 network_scanner.py [-i INTERFACE] [-r RANGE] [-t TIMEOUT] [-o OUTPUT] [-v]
+sudo python3 pysec.py net [RANGE] [-i INTERFACE] [--timeout TIMEOUT] [-o OUTPUT] [-v]
 ```
+
+Or standalone with `sudo python3 network_scanner.py [RANGE] ...`.
 
 ### Command Line Options
 
 | Option | Description | Default |
 |--------|-------------|---------|
+| `target` | IP range to scan in CIDR notation | 192.168.1.0/24 |
 | `-i, --interface` | Network interface to use | Auto-detected |
-| `-r, --range` | IP range to scan in CIDR notation | 192.168.1.0/24 |
-| `-t, --timeout` | Timeout for responses in seconds | 2 |
+| `--timeout` | Timeout for responses in seconds | 2 |
 | `-o, --output` | Save results to the specified file | None (display in terminal) |
 | `-v, --verbose` | Enable verbose output (includes MAC vendor information) | False |
 

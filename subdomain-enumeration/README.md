@@ -31,14 +31,16 @@ pip3 install requests beautifulsoup4
 Basic usage:
 
 ```bash
-python3 subdomain_enumeration.py example.com
+python3 pysec.py subdomain example.com
 ```
 
 Extended usage with options:
 
 ```bash
-python3 subdomain_enumeration.py example.com -w wordlist.txt -t 20 --both-protocols -o results.txt
+python3 pysec.py subdomain example.com -w wordlist.txt -T 20 --both-protocols -o results.txt
 ```
+
+Or standalone with `python3 subdomain-enumeration/subdomain_enumeration.py example.com`.
 
 ## Command-line Options
 
@@ -46,7 +48,7 @@ python3 subdomain_enumeration.py example.com -w wordlist.txt -t 20 --both-protoc
 |--------|-------------|---------|
 | `domain` | Target domain to scan (e.g., example.com) | Required |
 | `-w, --wordlist` | Wordlist file containing subdomains to check | wordlist.txt |
-| `-t, --threads` | Number of concurrent threads | 10 |
+| `-T, --threads` | Number of concurrent threads | 10 |
 | `--timeout` | Request timeout in seconds | 5 |
 | `-o, --output` | Save results to this file | None (display in terminal) |
 | `--https` | Use HTTPS instead of HTTP | False (HTTP) |

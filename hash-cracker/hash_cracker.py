@@ -90,17 +90,16 @@ def crack_hash(wordlist_path: str, hash_to_crack: str, hash_type: str = 'md5') -
         print(f"An unexpected error occurred: {str(e)}")
         return None
 
-def main():
-    """Main function to parse arguments and execute the hash cracking process."""
-    parser = argparse.ArgumentParser(description='Hash Cracker - A tool to crack various hash types')
+def add_arguments(parser):
     parser.add_argument('-w', '--wordlist', type=str, help='Path to the wordlist file')
     parser.add_argument('-H', '--hash', type=str, help='Hash to crack')
-    parser.add_argument('-t', '--type', default='md5', choices=HASH_TYPES.keys(),
+    parser.add_argument('--type', default='md5', choices=HASH_TYPES.keys(),
                         help=f'Hash type to use. Default is md5. Available options: {", ".join(HASH_TYPES.keys())}')
     parser.add_argument('-i', '--interactive', action='store_true', help='Run in interactive mode')
 
-    args = parser.parse_args()
 
+def run(args):
+    """Parse the inputs and execute the hash cracking process."""
     # Get hash and wordlist (either from args or interactively)
     wordlist_path = args.wordlist
     hash_to_crack = args.hash
@@ -140,6 +139,13 @@ def main():
         print("\nPassword not found in the wordlist.")
         print(f"Time taken: {total_time:.2f} seconds")
         print("Try with a different wordlist or hash type.")
+
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(description='Hash Cracker - A tool to crack various hash types')
+    add_arguments(parser)
+    run(parser.parse_args(argv))
+
 
 if __name__ == "__main__":
     try:

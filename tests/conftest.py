@@ -14,3 +14,5 @@ TOOL_DIRS = [
 
 for name in TOOL_DIRS:
     sys.path.insert(0, str(ROOT / name))
+
+sys.path.insert(0, str(ROOT))
