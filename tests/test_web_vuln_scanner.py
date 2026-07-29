@@ -1,7 +1,13 @@
 import web_vuln_scanner
+from bs4 import BeautifulSoup
 
 MARKER = "pysecXSS31337"
 Scanner = web_vuln_scanner.WebVulnScanner
+
+
+def parse_first_form(scanner, html, page_url):
+    form = BeautifulSoup(html, "html.parser").find("form")
+    return scanner._parse_form(form, page_url)
 
 
 def test_base_url_derivation():
@@ -40,3 +46,40 @@ def test_encoded_reflection_is_not_flagged():
 def test_attribute_value_reflection_is_not_flagged():
     html = '<input value="<script>' + MARKER + '</script>">'
     assert not Scanner._reflects_as_markup(html, MARKER)
+
+
+def test_response_sql_error_detects_and_clears():
+    assert Scanner._response_sql_error("... SQL syntax near ...") == "SQL syntax"
+    assert Scanner._response_sql_error("all good here") is None
+
+
+def test_parse_form_get_with_relative_action():
+    scanner = Scanner("https://example.com")
+    html = '<form action="/search" method="get"><input name="q"><input name="lang" value="en"></form>'
+    form = parse_first_form(scanner, html, "https://example.com/page")
+    assert form == {
+        "action": "https://example.com/search",
+        "method": "get",
+        "fields": {"q": "test", "lang": "en"},
+    }
+
+
+def test_parse_form_post_defaults_action_to_page():
+    scanner = Scanner("https://example.com")
+    html = '<form method="POST"><textarea name="comment"></textarea></form>'
+    form = parse_first_form(scanner, html, "https://example.com/post")
+    assert form["method"] == "post"
+    assert form["action"] == "https://example.com/post"
+    assert form["fields"] == {"comment": "test"}
+
+
+def test_parse_form_skips_external_action():
+    scanner = Scanner("https://example.com")
+    html = '<form action="https://evil.example.net/x"><input name="q"></form>'
+    assert parse_first_form(scanner, html, "https://example.com/page") is None
+
+
+def test_parse_form_skips_form_without_named_fields():
+    scanner = Scanner("https://example.com")
+    html = '<form action="/x"><input type="submit"></form>'
+    assert parse_first_form(scanner, html, "https://example.com/page") is None
