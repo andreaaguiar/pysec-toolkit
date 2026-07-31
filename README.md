@@ -5,7 +5,6 @@
 [![Lint](https://github.com/andreaaguiar/pysec-toolkit/actions/workflows/lint.yml/badge.svg)](https://github.com/andreaaguiar/pysec-toolkit/actions/workflows/lint.yml)
 [![CodeQL](https://github.com/andreaaguiar/pysec-toolkit/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/andreaaguiar/pysec-toolkit/actions/workflows/github-code-scanning/codeql)
 [![Dependabot Updates](https://github.com/andreaaguiar/pysec-toolkit/actions/workflows/dependabot/dependabot-updates/badge.svg)](https://github.com/andreaaguiar/pysec-toolkit/actions/workflows/dependabot/dependabot-updates)
-[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](./LICENSE)
 
 A collection of security assessment and penetration testing tools written in Python.
 
@@ -212,7 +211,3 @@ Planned features and improvements:
 Contributions are welcome! Please feel free to submit a Pull Request.
 
 To report a security issue in the toolkit, see [SECURITY.md](./SECURITY.md).
-
-## License
-
-This project is licensed under the MIT License. See the [LICENSE](./LICENSE) file for details. Use of these tools is subject to the ethical and legal considerations described above.
