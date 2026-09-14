@@ -7,4 +7,4 @@ paramiko~=5.0.0       # For SSH connections in ssh-brute-force tool
 scapy~=2.7.0          # For network scanning and ARP operations
 
 # Utility libraries
-tqdm~=4.70.0          # For progress bars in various scripts
+tqdm~=4.70.1          # For progress bars in various scripts
