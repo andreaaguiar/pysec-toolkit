@@ -1,0 +1,6 @@
+SQL syntax
+mysql_fetch_array
+ORA-01756
+SQLSTATE[42000]
+Microsoft SQL Native Client error
+PostgreSQL query failed
