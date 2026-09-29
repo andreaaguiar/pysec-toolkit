@@ -1,5 +1,6 @@
 import argparse
 import json
+import os
 import sys
 import urllib.parse
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -8,6 +9,35 @@ from urllib.parse import urljoin, urlparse
 
 import requests
 from bs4 import BeautifulSoup
+
+from pysec import data_path
+
+
+def load_payloads(filename, payloads_dir=None, substitutions=None):
+    """Read a payload file into a list of entries, skipping blanks and comment lines.
+
+    Looks in payloads_dir first when given, then falls back to the bundled file.
+    Tokens in substitutions (for example __MARKER__) are replaced in each entry.
+    """
+    path = None
+    if payloads_dir:
+        candidate = os.path.join(payloads_dir, filename)
+        if os.path.exists(candidate):
+            path = candidate
+    if path is None:
+        path = data_path(filename)
+
+    entries = []
+    with open(path, encoding="utf-8") as f:
+        for line in f:
+            entry = line.strip()
+            if not entry or entry.startswith("#"):
+                continue
+            if substitutions:
+                for token, value in substitutions.items():
+                    entry = entry.replace(token, value)
+            entries.append(entry)
+    return entries
 
 
 class WebVulnScanner:
@@ -23,33 +53,14 @@ class WebVulnScanner:
     """
 
     XSS_MARKER = "pysecXSS31337"
-    XSS_PAYLOADS = [
-        f"<script>{XSS_MARKER}</script>",
-        f'"><img src=x onerror={XSS_MARKER}>',
-        f"'><svg onload={XSS_MARKER}>",
-    ]
-    SQL_PAYLOADS = [
-        "'",
-        "' OR '1'='1",
-        "1' OR '1'='1' --",
-        "' UNION SELECT 1,2,3,4 --",
-    ]
-    SQL_ERRORS = [
-        "SQL syntax",
-        "mysql_fetch_array",
-        "ORA-01756",
-        "SQLSTATE[42000]",
-        "Microsoft SQL Native Client error",
-        "PostgreSQL query failed",
-    ]
     OPEN_REDIRECT_HOST = "example.com"
-    OPEN_REDIRECT_PAYLOADS = [
-        f"//{OPEN_REDIRECT_HOST}",
-        f"https://{OPEN_REDIRECT_HOST}",
-        f"http://{OPEN_REDIRECT_HOST}",
-    ]
 
-    def __init__(self, url, output=None, cookies=None, threads=5, user_agent=None):
+    XSS_PAYLOADS_FILE = "xss_payloads.txt"
+    SQLI_PAYLOADS_FILE = "sqli_payloads.txt"
+    SQL_ERRORS_FILE = "sql_errors.txt"
+    OPEN_REDIRECT_PAYLOADS_FILE = "open_redirect_payloads.txt"
+
+    def __init__(self, url, output=None, cookies=None, threads=5, user_agent=None, payloads_dir=None):
         if not urlparse(url).scheme:
             url = "https://" + url
         parsed = urlparse(url)
@@ -68,6 +79,15 @@ class WebVulnScanner:
             "insecure_headers": [],
             "directory_listing": []
         }
+
+        self.xss_payloads = load_payloads(
+            self.XSS_PAYLOADS_FILE, payloads_dir, {"__MARKER__": self.XSS_MARKER}
+        )
+        self.sql_payloads = load_payloads(self.SQLI_PAYLOADS_FILE, payloads_dir)
+        self.sql_errors = load_payloads(self.SQL_ERRORS_FILE, payloads_dir)
+        self.open_redirect_payloads = load_payloads(
+            self.OPEN_REDIRECT_PAYLOADS_FILE, payloads_dir, {"__HOST__": self.OPEN_REDIRECT_HOST}
+        )
 
         # Set up cookies if provided
         if cookies:
@@ -210,7 +230,7 @@ class WebVulnScanner:
             return
 
         for param in query_params:
-            for payload in self.XSS_PAYLOADS:
+            for payload in self.xss_payloads:
                 test_params = query_params.copy()
                 test_params[param] = [payload]
 
@@ -259,10 +279,10 @@ class WebVulnScanner:
 
         return False
 
-    @classmethod
-    def _response_sql_error(cls, text):
+    @staticmethod
+    def _response_sql_error(text, errors):
         """Return the first known SQL error signature found in the text, or None."""
-        for error in cls.SQL_ERRORS:
+        for error in errors:
             if error in text:
                 return error
         return None
@@ -284,7 +304,7 @@ class WebVulnScanner:
             return
 
         for param in query_params:
-            for payload in self.SQL_PAYLOADS:
+            for payload in self.sql_payloads:
                 test_params = query_params.copy()
                 test_params[param] = [payload]
 
@@ -302,7 +322,7 @@ class WebVulnScanner:
                     print(f"[-] Error testing SQL injection at {test_url}: {e}")
                     continue
 
-                error = self._response_sql_error(response.text)
+                error = self._response_sql_error(response.text, self.sql_errors)
                 if error:
                     self.results["sqli"].append({
                         "url": url,
@@ -330,7 +350,7 @@ class WebVulnScanner:
             for param in query_params:
                 # Only test likely redirect parameters
                 if param.lower() in redirect_params or "redir" in param.lower() or "url" in param.lower():
-                    for payload in self.OPEN_REDIRECT_PAYLOADS:
+                    for payload in self.open_redirect_payloads:
                         test_params = query_params.copy()
                         test_params[param] = [payload]
 
@@ -391,7 +411,7 @@ class WebVulnScanner:
     def _check_form_xss(self, form):
         """Inject XSS payloads into each form field and confirm live reflection"""
         for field in form['fields']:
-            for payload in self.XSS_PAYLOADS:
+            for payload in self.xss_payloads:
                 data = dict(form['fields'])
                 data[field] = payload
 
@@ -412,7 +432,7 @@ class WebVulnScanner:
     def _check_form_sqli(self, form):
         """Inject SQL payloads into each form field and check for SQL errors"""
         for field in form['fields']:
-            for payload in self.SQL_PAYLOADS:
+            for payload in self.sql_payloads:
                 data = dict(form['fields'])
                 data[field] = payload
 
@@ -420,7 +440,7 @@ class WebVulnScanner:
                 if response is None:
                     continue
 
-                error = self._response_sql_error(response.text)
+                error = self._response_sql_error(response.text, self.sql_errors)
                 if error:
                     self.results["sqli"].append({
                         "url": form['action'],
@@ -501,6 +521,10 @@ def add_arguments(parser):
     parser.add_argument('-c', '--cookies', help='File containing cookies (format: name=value; name2=value2)')
     parser.add_argument('-T', '--threads', type=int, default=5, help='Number of threads (default: 5)')
     parser.add_argument('-a', '--user-agent', help='Custom User-Agent string')
+    parser.add_argument('-p', '--payloads-dir',
+                        help='Directory of custom payload files (xss_payloads.txt, sqli_payloads.txt, '
+                             'sql_errors.txt, open_redirect_payloads.txt). Any file not present there '
+                             'falls back to the bundled default')
 
 
 def run(args):
@@ -509,7 +533,8 @@ def run(args):
         output=args.output,
         cookies=args.cookies,
         threads=args.threads,
-        user_agent=args.user_agent
+        user_agent=args.user_agent,
+        payloads_dir=args.payloads_dir
     )
     scanner.scan()
 

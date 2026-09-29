@@ -1,6 +1,7 @@
 from bs4 import BeautifulSoup
 
 from pysec import web_vuln_scanner
+from pysec.web_vuln_scanner import load_payloads
 
 MARKER = "pysecXSS31337"
 Scanner = web_vuln_scanner.WebVulnScanner
@@ -50,8 +51,9 @@ def test_attribute_value_reflection_is_not_flagged():
 
 
 def test_response_sql_error_detects_and_clears():
-    assert Scanner._response_sql_error("... SQL syntax near ...") == "SQL syntax"
-    assert Scanner._response_sql_error("all good here") is None
+    errors = ["SQL syntax", "ORA-01756"]
+    assert Scanner._response_sql_error("... SQL syntax near ...", errors) == "SQL syntax"
+    assert Scanner._response_sql_error("all good here", errors) is None
 
 
 def test_redirect_targets_host_matches_payload_forms():
@@ -99,3 +101,41 @@ def test_parse_form_skips_form_without_named_fields():
     scanner = Scanner("https://example.com")
     html = '<form action="/x"><input type="submit"></form>'
     assert parse_first_form(scanner, html, "https://example.com/page") is None
+
+
+def test_default_payloads_match_previous_inline_sets():
+    scanner = Scanner("https://example.com")
+    assert scanner.sql_payloads == ["'", "' OR '1'='1", "1' OR '1'='1' --", "' UNION SELECT 1,2,3,4 --"]
+    assert scanner.xss_payloads == [
+        "<script>pysecXSS31337</script>",
+        '"><img src=x onerror=pysecXSS31337>',
+        "'><svg onload=pysecXSS31337>",
+    ]
+    assert scanner.open_redirect_payloads == ["//example.com", "https://example.com", "http://example.com"]
+    assert "SQL syntax" in scanner.sql_errors
+
+
+def test_marker_and_host_are_substituted():
+    scanner = Scanner("https://example.com")
+    assert all(scanner.XSS_MARKER in p for p in scanner.xss_payloads)
+    assert all("__MARKER__" not in p for p in scanner.xss_payloads)
+    assert all(scanner.OPEN_REDIRECT_HOST in p for p in scanner.open_redirect_payloads)
+    assert all("__HOST__" not in p for p in scanner.open_redirect_payloads)
+
+
+def test_payloads_dir_overrides_and_falls_back(tmp_path):
+    (tmp_path / "sqli_payloads.txt").write_text("' OR sleep(5) --\n' AND 1=1 --\n")
+    scanner = Scanner("https://example.com", payloads_dir=str(tmp_path))
+    assert scanner.sql_payloads == ["' OR sleep(5) --", "' AND 1=1 --"]
+    assert scanner.xss_payloads == [
+        "<script>pysecXSS31337</script>",
+        '"><img src=x onerror=pysecXSS31337>',
+        "'><svg onload=pysecXSS31337>",
+    ]
+
+
+def test_load_payloads_skips_blank_and_comment_lines(tmp_path):
+    payload_file = tmp_path / "sqli_payloads.txt"
+    payload_file.write_text("# a comment\n\n' OR 1=1 --\n   \n# another\nUNION SELECT NULL\n")
+    entries = load_payloads("sqli_payloads.txt", payloads_dir=str(tmp_path))
+    assert entries == ["' OR 1=1 --", "UNION SELECT NULL"]

@@ -1,0 +1,3 @@
+<script>__MARKER__</script>
+"><img src=x onerror=__MARKER__>
+'><svg onload=__MARKER__>

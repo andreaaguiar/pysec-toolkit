@@ -40,6 +40,35 @@ Or standalone with `python3 -m pysec.web_vuln_scanner https://example.com -o res
 - `-c, --cookies`: File containing cookies (format: name=value; name2=value2)
 - `-T, --threads`: Number of threads (default: 5)
 - `-a, --user-agent`: Custom User-Agent string
+- `-p, --payloads-dir`: Directory of custom payload files. Any file not present there falls back to the bundled default
+
+## Custom Payloads
+
+The scanner ships with a small default payload set as package data. Each detection type reads its entries from a file:
+
+| File | Purpose |
+|------|---------|
+| `xss_payloads.txt` | XSS payloads to inject |
+| `sqli_payloads.txt` | SQL injection payloads to inject |
+| `sql_errors.txt` | Response signatures that indicate a SQL error |
+| `open_redirect_payloads.txt` | Redirect payloads to inject |
+
+To use a larger set, put files with these names in a directory and pass it with `-p/--payloads-dir`. The scanner reads a file from that directory when it exists and falls back to the bundled default otherwise, so you can override one type without redefining the rest.
+
+File format:
+
+- One entry per line
+- Blank lines and lines that start with `#` are ignored
+- In `xss_payloads.txt`, the token `__MARKER__` is replaced with a unique marker the scanner then looks for in the response, which keeps false positives low. Keep `__MARKER__` where you want that detectable value
+- In `open_redirect_payloads.txt`, the token `__HOST__` is replaced with the host the scanner confirms the redirect lands on
+
+Larger community payload lists such as [SecLists](https://github.com/danielmiessler/SecLists) and [PayloadsAllTheThings](https://github.com/swisskyrepo/PayloadsAllTheThings) work well as a source. Add `__MARKER__` to XSS entries so reflection detection still applies.
+
+Example:
+
+```bash
+pysec web https://example.com -p ./my-payloads -o results.json
+```
 
 ### Default Behavior
 

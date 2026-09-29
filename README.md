@@ -152,7 +152,11 @@ pysec-toolkit/
 │           ├── directory_wordlist.txt
 │           ├── subdomain_wordlist.txt
 │           ├── hash_wordlist.txt
-│           └── ssh_passwords.txt
+│           ├── ssh_passwords.txt
+│           ├── xss_payloads.txt
+│           ├── sqli_payloads.txt
+│           ├── sql_errors.txt
+│           └── open_redirect_payloads.txt
 ├── docs/
 │   ├── port-scanner.md
 │   ├── network-scanner.md
@@ -207,7 +211,8 @@ Planned features and improvements:
 
 - Implement automated reporting
 - Add GUI interface option
-- Add larger payload libraries for vulnerability scanning
+- Grow the bundled vulnerability payload sets (custom sets already load with `--payloads-dir`)
+- Add boolean-based and time-based SQL injection detection
 
 ## Contributing
 
