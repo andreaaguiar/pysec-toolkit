@@ -54,6 +54,21 @@ def test_response_sql_error_detects_and_clears():
     assert Scanner._response_sql_error("all good here") is None
 
 
+def test_redirect_targets_host_matches_payload_forms():
+    assert Scanner._redirect_targets_host("//example.com", "example.com")
+    assert Scanner._redirect_targets_host("https://example.com", "example.com")
+    assert Scanner._redirect_targets_host("http://example.com/path?q=1", "example.com")
+    assert Scanner._redirect_targets_host("HTTPS://EXAMPLE.COM", "example.com")
+
+
+def test_redirect_targets_host_rejects_substring_lookalikes():
+    assert not Scanner._redirect_targets_host("https://example.com.evil.test", "example.com")
+    assert not Scanner._redirect_targets_host("https://evil.test/example.com", "example.com")
+    assert not Scanner._redirect_targets_host("https://notexample.com", "example.com")
+    assert not Scanner._redirect_targets_host("/local/path", "example.com")
+    assert not Scanner._redirect_targets_host("", "example.com")
+
+
 def test_parse_form_get_with_relative_action():
     scanner = Scanner("https://example.com")
     html = '<form action="/search" method="get"><input name="q"><input name="lang" value="en"></form>'
