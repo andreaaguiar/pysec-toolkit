@@ -3,13 +3,13 @@ import concurrent.futures
 import os
 import sys
 import time
-from datetime import datetime
 from urllib.parse import urljoin
 
 import requests
 from bs4 import BeautifulSoup
 
 from pysec import data_path
+from pysec.report import ReportBuilder, add_report_arguments, write_report
 
 DEFAULT_WORDLIST = data_path("directory_wordlist.txt")
 
@@ -66,11 +66,11 @@ def add_arguments(parser):
     parser.add_argument('-w', '--wordlist', default=DEFAULT_WORDLIST, help='Wordlist file containing directories to check')
     parser.add_argument('-T', '--threads', type=int, default=10, help='Number of concurrent threads (default: 10)')
     parser.add_argument('--timeout', type=float, default=3, help='Request timeout in seconds (default: 3)')
-    parser.add_argument('-o', '--output', help='Save results to this file')
     parser.add_argument('--https', action='store_true', help='Use HTTPS instead of HTTP')
     parser.add_argument('-x', '--extensions', default='.html,.php,.txt,.asp,.aspx,/',
                         help='Comma-separated list of extensions to check. Use "/" for directory, empty for no extension (default: .html,.php,.txt,.asp,.aspx,/)')
     parser.add_argument('-v', '--verbose', action='store_true', help='Show verbose output including content length')
+    add_report_arguments(parser)
 
 
 def run(args):
@@ -82,6 +82,8 @@ def run(args):
     if not os.path.exists(args.wordlist):
         print(f"Error: Wordlist file '{args.wordlist}' not found.")
         sys.exit(1)
+
+    report = ReportBuilder("dir", args.target)
 
     # Clean target URL (remove protocol if present)
     base_url = args.target
@@ -172,26 +174,16 @@ def run(args):
     print(f"\n\n[+] Enumeration completed in {elapsed_time:.2f} seconds")
     print(f"[+] Found {len(valid_results)} valid resources")
 
-    # Save results to file if requested
-    if args.output and valid_results:
-        try:
-            with open(args.output, 'w') as f:
-                f.write(f"# Directory enumeration results for {protocol}://{base_url}\n")
-                f.write(f"# Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
-
-                for result in valid_results:
-                    status_info = f"Status: {result['status_code']}"
-                    size_info = f"Size: {result['content_length']} bytes"
-                    title_info = f"Title: {result['title']}" if result['title'] else ""
-
-                    f.write(f"{result['url']} | {status_info} | {size_info}")
-                    if title_info:
-                        f.write(f" | {title_info}")
-                    f.write("\n")
-
-            print(f"[+] Results saved to {args.output}")
-        except Exception as e:
-            print(f"[!] Error saving results: {e}")
+    if getattr(args, "report", None):
+        built = report.build(
+            summary={
+                "base_url": f"{protocol}://{base_url}",
+                "resources_found": len(valid_results),
+            },
+            findings=valid_results,
+        )
+        for path in write_report(built, args.report, args.report_format):
+            print(f"[+] Report written to {path}")
 
 
 

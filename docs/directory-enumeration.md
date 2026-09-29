@@ -11,7 +11,7 @@
 - **Multiple file extensions** - Check several extensions (.html, .php, .asp, and more)
 - **Protocol options** - Use HTTP or HTTPS
 - **Progress tracking** - Show progress and request rate
-- **Result saving** - Save results to a file
+- **Report output** - Save results as a JSON or HTML report with `--report`
 - **Timeout control** - Set the request timeout
 - **User-agent customization** - Send a browser user-agent header
 - **Title extraction** - Show the page title for each valid path
@@ -41,7 +41,7 @@ pysec dir target-domain.com
 Extended usage with options:
 
 ```bash
-pysec dir example.com -w custom_wordlist.txt -T 20 --https -x ".html,.php,.txt,/" -o results.txt -v
+pysec dir example.com -w custom_wordlist.txt -T 20 --https -x ".html,.php,.txt,/" --report results.html -v
 ```
 
 Or standalone with `python3 -m pysec.directory_enumeration target-domain.com`.
@@ -54,9 +54,10 @@ Or standalone with `python3 -m pysec.directory_enumeration target-domain.com`.
 | `-w, --wordlist` | Wordlist file containing directories to check | Bundled `directory_wordlist.txt` |
 | `-T, --threads` | Number of concurrent threads | 10 |
 | `--timeout` | Request timeout in seconds | 3 |
-| `-o, --output` | Save results to this file | None (results displayed in terminal) |
 | `--https` | Use HTTPS instead of HTTP | False (HTTP) |
 | `-x, --extensions` | Comma-separated list of extensions to check | .html,.php,.txt,.asp,.aspx,/ |
+| `--report` | Write a JSON and/or HTML report to this path | None (results displayed in terminal) |
+| `--report-format` | Report format: json, html, or both | Inferred from the path extension, else json |
 | `-v, --verbose` | Show verbose output including content length | False |
 
 ## How It Works
@@ -88,7 +89,7 @@ After completion:
 ```bash
 [+] Enumeration completed in 22.35 seconds
 [+] Found 5 valid resources
-[+] Results saved to results.txt
+[+] Report written to results.html
 ```
 
 ## Creating a Wordlist

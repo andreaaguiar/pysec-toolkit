@@ -29,20 +29,21 @@ pip3 install -e .
 ## Usage
 
 ```bash
-pysec web https://example.com -o results.json
+pysec web https://example.com --report results.json
 ```
 
-Or standalone with `python3 -m pysec.web_vuln_scanner https://example.com -o results.json`.
+Or standalone with `python3 -m pysec.web_vuln_scanner https://example.com --report results.json`.
 
 ### Options
 
 - `target`: Target URL to scan (required)
-- `-o, --output`: Output file for results in JSON format
 - `-c, --cookies`: File containing cookies (format: name=value; name2=value2)
 - `-T, --threads`: Number of threads (default: 5)
 - `-a, --user-agent`: Custom User-Agent string
 - `-p, --payloads-dir`: Directory of custom payload files. Any file not present there falls back to the bundled default
 - `--sqli-delay`: Delay in seconds a time-based SQL injection payload should cause (default: 5)
+- `--report`: Write a JSON and/or HTML report to this path
+- `--report-format`: Report format: json, html, or both (default: inferred from the path extension, else json)
 
 ## Custom Payloads
 
@@ -71,7 +72,7 @@ Larger community payload lists such as [SecLists](https://github.com/danielmiess
 Example:
 
 ```bash
-pysec web https://example.com -p ./my-payloads -o results.json
+pysec web https://example.com -p ./my-payloads --report results.json
 ```
 
 ### Default Behavior
@@ -84,42 +85,51 @@ pysec web https://example.com -p ./my-payloads -o results.json
 
 ## Example
 
-Scan a website with custom cookies and save results:
+Scan a website with custom cookies and save a report:
 
 ```bash
-pysec web https://example.com -c cookies.txt -o scan_results.json
+pysec web https://example.com -c cookies.txt --report scan_results.json
 ```
 
-### Output Format
+### Report Format
 
-The tool saves results in JSON format with the following structure:
+The tool writes the same report envelope as the other tools. Pass a `.html`
+path (or `--report-format html`) to get a self-contained HTML report instead.
+The JSON structure is:
 
 ```json
 {
+    "tool": "web",
     "target": "https://example.com",
-    "scan_time": "2025-05-07 12:34:56",
-    "results": {
-        "xss": [
-            {
-                "url": "https://example.com/page",
-                "parameter": "query",
-                "payload": "<script>alert('XSS')</script>",
-                "details": "Reflected XSS vulnerability detected"
-            }
-        ],
-        "sqli": [
-            {
-                "url": "https://example.com/page",
-                "parameter": "id",
-                "payload": "' OR '1'='1",
-                "error": "SQL syntax",
-                "details": "Possible SQL injection detected"
-            }
-        ],
-        "open_redirect": [...],
-        "insecure_headers": [...],
-        "directory_listing": [...]
-    }
+    "started_at": "2026-09-30T12:34:56",
+    "finished_at": "2026-09-30T12:36:10",
+    "duration_seconds": 74.0,
+    "summary": {
+        "xss": 1,
+        "sqli": 1,
+        "open_redirect": 0,
+        "insecure_headers": 1,
+        "directory_listing": 0,
+        "urls_scanned": 12,
+        "forms_tested": 3
+    },
+    "findings": [
+        {
+            "type": "xss",
+            "url": "https://example.com/page",
+            "parameter": "query",
+            "payload": "<script>pysecXSS31337</script>",
+            "details": "Reflected XSS: payload reflected as unescaped markup"
+        },
+        {
+            "type": "sqli",
+            "url": "https://example.com/page",
+            "parameter": "id",
+            "payload": "' OR '1'='1",
+            "error": "SQL syntax",
+            "details": "Possible SQL injection detected"
+        }
+    ]
 }
 ```
 
@@ -134,16 +144,17 @@ This tool can be used alongside the [CTF-Toolkit](https://github.com/andreaaguia
 ### Example Workflow
 
 ```bash
-# First, discover subdomains
-pysec subdomain example.com -o subdomains.txt
+# Discover subdomains and save a JSON report
+pysec subdomain example.com --report subdomains.json
 
-# Scan each subdomain for vulnerabilities
-cat subdomains.txt | while read subdomain; do
-    pysec web "https://$subdomain" -o "${subdomain}-vulns.json"
+# Scan each discovered subdomain URL for vulnerabilities
+jq -r '.findings[].url' subdomains.json | while read -r url; do
+    host=$(echo "$url" | sed -E 's#https?://##')
+    pysec web "$url" --report "vulns-$host.json"
 done
 
-# Use directory enumeration for discovered vulnerable endpoints
-pysec dir vulnerable-subdomain.example.com --https -o directories.txt
+# Enumerate directories on a discovered host
+pysec dir vulnerable-subdomain.example.com --https --report directories.html
 ```
 
 ## Disclaimer

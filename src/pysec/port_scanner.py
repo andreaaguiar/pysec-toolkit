@@ -5,6 +5,8 @@ import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
 
+from pysec.report import ReportBuilder, add_report_arguments, write_report
+
 COMMON_SERVICES = {
     21: "FTP",
     22: "SSH",
@@ -35,6 +37,7 @@ def add_arguments(parser):
     parser.add_argument('-T', '--threads', help='Number of threads to use', type=int, default=100)
     parser.add_argument('--timeout', help='Timeout in seconds for each port', type=float, default=0.5)
     parser.add_argument('-v', '--verbose', help='Verbose output', action='store_true')
+    add_report_arguments(parser)
 
 
 def parse_ports(ports_str):
@@ -59,6 +62,7 @@ def probe_port(ip, port, timeout):
 
 def run(args):
     ip = args.target
+    report = ReportBuilder("port", ip)
     open_ports = []
     print_lock = threading.Lock()
     start_time = time.time()
@@ -99,15 +103,31 @@ def run(args):
     print("\n" + "=" * 60)
     print(f"Scan completed in {elapsed_time:.2f} seconds")
 
+    open_ports.sort()
     if open_ports:
         print("Open Ports Summary:")
-        open_ports.sort()
         for port in open_ports:
             service = COMMON_SERVICES.get(port, "Unknown")
             print(f"Port {port}: {service}")
         print(f"Total: {len(open_ports)} open ports found")
     else:
         print("No open ports found.")
+
+    if getattr(args, "report", None):
+        findings = [
+            {"port": port, "service": COMMON_SERVICES.get(port, "Unknown")}
+            for port in open_ports
+        ]
+        result = report.build(
+            summary={
+                "port_range": f"{start_port}-{end_port}",
+                "ports_scanned": total_ports,
+                "open_ports": len(open_ports),
+            },
+            findings=findings,
+        )
+        for path in write_report(result, args.report, args.report_format):
+            print(f"[+] Report written to {path}")
 
 
 def main(argv=None):

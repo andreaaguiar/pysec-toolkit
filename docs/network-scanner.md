@@ -12,7 +12,7 @@
 - **Configurable timeout** - Set the response wait time per network
 - **Progress indication** - Show progress on large networks
 - **Hardware vendor detection** - Name the vendor from the MAC address (verbose mode)
-- **Output file support** - Save results to a text file
+- **Report output** - Save results as a JSON or HTML report with `--report`
 
 ## Requirements
 
@@ -31,7 +31,7 @@ Note: Scapy may require additional dependencies based on your operating system.
 ## Usage
 
 ```bash
-sudo pysec net [RANGE] [-i INTERFACE] [--timeout TIMEOUT] [-o OUTPUT] [-v]
+sudo pysec net [RANGE] [-i INTERFACE] [--timeout TIMEOUT] [--report PATH] [-v]
 ```
 
 Or standalone with `sudo python3 -m pysec.network_scanner [RANGE] ...`.
@@ -43,8 +43,9 @@ Or standalone with `sudo python3 -m pysec.network_scanner [RANGE] ...`.
 | `target` | IP range to scan in CIDR notation | 192.168.1.0/24 |
 | `-i, --interface` | Network interface to use | Auto-detected |
 | `--timeout` | Timeout for responses in seconds | 2 |
-| `-o, --output` | Save results to the specified file | None (display in terminal) |
 | `-v, --verbose` | Enable verbose output (includes MAC vendor information) | False |
+| `--report` | Write a JSON and/or HTML report to this path | None (display in terminal) |
+| `--report-format` | Report format: json, html, or both | Inferred from the path extension, else json |
 
 Note: This script requires root/administrator privileges to send raw packets on the network interface.
 

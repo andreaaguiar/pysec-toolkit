@@ -66,17 +66,33 @@ pysec ssh 192.168.1.10 -u root -w passwords.txt
 pysec hash -H <hash> -w wordlist.txt --type md5
 pysec dir example.com
 pysec subdomain example.com
-pysec web https://example.com -o results.json
+pysec web https://example.com --report results.html
 ```
 
 The shared options mean the same thing across tools: the target is the first
 positional argument (where one applies), `-T/--threads` sets the thread count,
-`--timeout` sets the request timeout, `-o/--output` writes results to a file,
-`-w/--wordlist` gives the wordlist or password list, and `-v/--verbose` adds
-detail. Run `pysec <tool> -h` for the full option list.
+`--timeout` sets the request timeout, `-w/--wordlist` gives the wordlist or
+password list, and `-v/--verbose` adds detail. Run `pysec <tool> -h` for the
+full option list.
 
 The directory and subdomain scanners fall back to a small bundled wordlist when
 you do not pass `-w/--wordlist`.
+
+## Reporting
+
+Every tool prints its results to the terminal. To also save them, pass
+`--report PATH`, which writes a structured report in a format shared across all
+tools:
+
+```bash
+pysec web https://example.com --report scan.json          # JSON
+pysec net 192.168.1.0/24 --report hosts.html              # self-contained HTML
+pysec port 192.168.1.10 --report scan --report-format both  # scan.json and scan.html
+```
+
+The format is inferred from the file extension. Use `--report-format` to set it
+explicitly to `json`, `html`, or `both`. Each report records the tool, target,
+start and finish times, duration, a summary, and the findings.
 
 Each tool also runs on its own as a module, for example
 `python3 -m pysec.port_scanner 192.168.1.10 -p 1-1000`. You can also run the
@@ -141,6 +157,7 @@ pysec-toolkit/
 │       ├── __init__.py
 │       ├── __main__.py
 │       ├── cli.py
+│       ├── report.py
 │       ├── port_scanner.py
 │       ├── network_scanner.py
 │       ├── ssh_brute_force.py
@@ -169,6 +186,7 @@ pysec-toolkit/
 ├── tests/
 │   ├── conftest.py
 │   ├── test_pysec.py
+│   ├── test_report.py
 │   ├── test_port_scanner.py
 │   ├── test_network_scanner.py
 │   ├── test_ssh_brute_force.py
@@ -210,10 +228,7 @@ GitHub Actions runs ruff and pytest on every push and pull request. The tests ru
 
 Planned features and improvements:
 
-- Implement automated reporting
 - Add GUI interface option
-- Grow the bundled vulnerability payload sets (custom sets already load with `--payloads-dir`)
-- Add boolean-based SQL injection detection (time-based already supported)
 
 ## Contributing
 

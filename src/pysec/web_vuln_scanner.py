@@ -1,5 +1,4 @@
 import argparse
-import json
 import os
 import sys
 import time
@@ -12,6 +11,7 @@ import requests
 from bs4 import BeautifulSoup
 
 from pysec import data_path
+from pysec.report import ReportBuilder, add_report_arguments, write_report
 
 
 def load_payloads(filename, payloads_dir=None, substitutions=None):
@@ -62,7 +62,7 @@ class WebVulnScanner:
     OPEN_REDIRECT_PAYLOADS_FILE = "open_redirect_payloads.txt"
     SQLI_TIME_PAYLOADS_FILE = "sqli_time_payloads.txt"
 
-    def __init__(self, url, output=None, cookies=None, threads=5, user_agent=None,
+    def __init__(self, url, cookies=None, threads=5, user_agent=None,
                  payloads_dir=None, sqli_delay=5):
         if not urlparse(url).scheme:
             url = "https://" + url
@@ -72,7 +72,6 @@ class WebVulnScanner:
         self.visited_urls = set()
         self.vulnerable_urls = set()
         self.forms = []
-        self.output_file = output
         self.cookies = {}
         self.threads = threads
         self.results = {
@@ -147,10 +146,6 @@ class WebVulnScanner:
         # Check for insecure headers
         print("[+] Checking for insecure headers...")
         self._check_security_headers()
-
-        # Save results if output file specified
-        if self.output_file:
-            self._save_results()
 
         # Print summary
         self._print_summary()
@@ -602,19 +597,6 @@ class WebVulnScanner:
         except Exception as e:
             print(f"[-] Error checking security headers: {e}")
 
-    def _save_results(self):
-        """Save scan results to a file"""
-        try:
-            with open(self.output_file, 'w') as f:
-                json.dump({
-                    "target": self.target_url,
-                    "scan_time": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-                    "results": self.results
-                }, f, indent=4)
-            print(f"[+] Results saved to {self.output_file}")
-        except Exception as e:
-            print(f"[-] Error saving results: {e}")
-
     def _print_summary(self):
         """Print a summary of findings"""
         print("\n--- SCAN SUMMARY ---")
@@ -631,7 +613,6 @@ class WebVulnScanner:
 
 def add_arguments(parser):
     parser.add_argument('target', help='Target URL to scan')
-    parser.add_argument('-o', '--output', help='Output file for results (JSON format)')
     parser.add_argument('-c', '--cookies', help='File containing cookies (format: name=value; name2=value2)')
     parser.add_argument('-T', '--threads', type=int, default=5, help='Number of threads (default: 5)')
     parser.add_argument('-a', '--user-agent', help='Custom User-Agent string')
@@ -641,12 +622,13 @@ def add_arguments(parser):
                              'not present there falls back to the bundled default')
     parser.add_argument('--sqli-delay', type=int, default=5,
                         help='Delay in seconds a time-based SQL injection payload should cause (default: 5)')
+    add_report_arguments(parser)
 
 
 def run(args):
+    report = ReportBuilder("web", args.target)
     scanner = WebVulnScanner(
         url=args.target,
-        output=args.output,
         cookies=args.cookies,
         threads=args.threads,
         user_agent=args.user_agent,
@@ -654,6 +636,18 @@ def run(args):
         sqli_delay=args.sqli_delay
     )
     scanner.scan()
+
+    if getattr(args, "report", None):
+        findings = []
+        for category, items in scanner.results.items():
+            for item in items:
+                findings.append({"type": category, **item})
+        summary = {category: len(items) for category, items in scanner.results.items()}
+        summary["urls_scanned"] = len(scanner.visited_urls)
+        summary["forms_tested"] = len(scanner.forms)
+        built = report.build(summary=summary, findings=findings)
+        for path in write_report(built, args.report, args.report_format):
+            print(f"[+] Report written to {path}")
 
 
 def main(argv=None):

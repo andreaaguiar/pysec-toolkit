@@ -1,5 +1,4 @@
 import argparse
-import datetime
 import itertools
 import os
 import sys
@@ -8,6 +7,8 @@ import time
 from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
 
 import paramiko
+
+from pysec.report import ReportBuilder, add_report_arguments, write_report
 
 
 def add_arguments(parser):
@@ -18,9 +19,9 @@ def add_arguments(parser):
     parser.add_argument('-T', '--threads', type=int, default=4, help='Number of threads (default: 4)')
     parser.add_argument('-d', '--delay', type=float, default=0, help='Delay between attempts in seconds (default: 0)')
     parser.add_argument('-v', '--verbose', action='store_true', help='Verbose mode')
-    parser.add_argument('-o', '--output', help='Output file for results')
     parser.add_argument('--timeout', type=int, default=5, help='Connection timeout in seconds (default: 5)')
     parser.add_argument('--resume', help='Resume from a specific line number in password file')
+    add_report_arguments(parser)
 
 def ssh_connect(target, port, username, password, timeout=5, code=0):
     """Try to connect to target using SSH with the given credentials."""
@@ -66,23 +67,10 @@ def attempt_login(target, port, username, password, verbose, timeout, delay=0, s
 
     return result, response, password
 
-def save_progress(output_file, password, success=False):
-    """Save progress to the output file."""
-    timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    with open(output_file, 'a') as f:
-        if success:
-            f.write(f"[{timestamp}] SUCCESS - Password: {password}\n")
-        else:
-            f.write(f"[{timestamp}] Last attempted password: {password}\n")
-
-def handle_interrupt(passwords_tried, current_password, output_file=None):
+def handle_interrupt(passwords_tried, current_password):
     """Handle keyboard interrupt gracefully."""
     print(f"\n\n[*] Exiting after trying {passwords_tried} passwords")
     print(f"[*] Last password attempted: {current_password}")
-
-    if output_file:
-        save_progress(output_file, current_password)
-
     print("[*] You can resume later using --resume option")
     sys.exit(1)
 
@@ -106,12 +94,7 @@ def run(args):
         total_passwords = sum(1 for line in open(password_file, 'rb') if line.strip())
     print(f"[*] Loaded {total_passwords} passwords from {password_file}")
 
-    # Set up output file if specified
-    output_file = args.output
-    if output_file:
-        with open(output_file, 'a') as f:
-            timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            f.write(f"[{timestamp}] Starting brute force on {username}@{target}:{args.port}\n")
+    report = ReportBuilder("ssh", target)
 
     # Set up resume functionality
     start_line = 0
@@ -122,6 +105,28 @@ def run(args):
     passwords_tried = start_line
     current_password = ""
     stop_event = threading.Event()
+
+    def emit_report(found_password):
+        if not getattr(args, "report", None):
+            return
+        findings = []
+        if found_password:
+            findings.append({
+                "target": f"{username}@{target}:{args.port}",
+                "username": username,
+                "password": found_password,
+            })
+        built = report.build(
+            summary={
+                "username": username,
+                "port": args.port,
+                "passwords_tried": passwords_tried,
+                "success": bool(found_password),
+            },
+            findings=findings,
+        )
+        for path in write_report(built, args.report, args.report_format):
+            print(f"[+] Report written to {path}")
 
     def submit(executor, password):
         return executor.submit(
@@ -187,17 +192,16 @@ def run(args):
                     print(f"[+] Target: {username}@{target}:{args.port}")
                     print(f"[+] Password: {found_password}")
 
-                    if output_file:
-                        save_progress(output_file, found_password, success=True)
-
+                    emit_report(found_password)
                     return True
 
         print(f"\n[-] Exhausted password list ({passwords_tried} passwords)")
         print("[-] No valid password found")
+        emit_report(None)
         return False
 
     except KeyboardInterrupt:
-        handle_interrupt(passwords_tried, current_password, output_file)
+        handle_interrupt(passwords_tried, current_password)
 
 
 def main(argv=None):

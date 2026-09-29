@@ -3,12 +3,12 @@ import concurrent.futures
 import os
 import sys
 import time
-from datetime import datetime
 
 import requests
 from bs4 import BeautifulSoup
 
 from pysec import data_path
+from pysec.report import ReportBuilder, add_report_arguments, write_report
 
 DEFAULT_WORDLIST = data_path("subdomain_wordlist.txt")
 
@@ -48,9 +48,9 @@ def add_arguments(parser):
     parser.add_argument('-w', '--wordlist', default=DEFAULT_WORDLIST, help='Wordlist file containing subdomains to check')
     parser.add_argument('-T', '--threads', type=int, default=10, help='Number of concurrent threads (default: 10)')
     parser.add_argument('--timeout', type=float, default=5, help='Request timeout in seconds (default: 5)')
-    parser.add_argument('-o', '--output', help='Save results to this file')
     parser.add_argument('--https', action='store_true', help='Use HTTPS instead of HTTP')
     parser.add_argument('--both-protocols', action='store_true', help='Check both HTTP and HTTPS')
+    add_report_arguments(parser)
 
 
 def run(args):
@@ -62,6 +62,8 @@ def run(args):
     if not os.path.exists(args.wordlist):
         print(f"Error: Wordlist file '{args.wordlist}' not found.")
         sys.exit(1)
+
+    report = ReportBuilder("subdomain", args.domain)
 
     # Read subdomain list
     try:
@@ -122,21 +124,17 @@ def run(args):
     print(f"\n\n[+] Enumeration completed in {elapsed_time:.2f} seconds")
     print(f"[+] Found {len(valid_domains)} valid subdomains")
 
-    # Save results to file if requested
-    if args.output and valid_domains:
-        try:
-            with open(args.output, 'w') as f:
-                f.write(f"# Subdomain enumeration results for {args.domain}\n")
-                f.write(f"# Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
-
-                for domain in valid_domains:
-                    status = domain.get('status_code', 'Unknown')
-                    title = f" - {domain['title']}" if domain.get('title') else ""
-                    f.write(f"{domain['url']} (Status: {status}){title}\n")
-
-            print(f"[+] Results saved to {args.output}")
-        except Exception as e:
-            print(f"[!] Error saving results: {e}")
+    if getattr(args, "report", None):
+        findings = [
+            {"url": d["url"], "status_code": d.get("status_code"), "title": d.get("title")}
+            for d in valid_domains
+        ]
+        built = report.build(
+            summary={"subdomains_found": len(valid_domains)},
+            findings=findings,
+        )
+        for path in write_report(built, args.report, args.report_format):
+            print(f"[+] Report written to {path}")
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description='Subdomain enumeration tool')
