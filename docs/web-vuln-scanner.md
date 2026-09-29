@@ -18,6 +18,7 @@ pip3 install -e .
 
 - **XSS detection**: Find reflected Cross-Site Scripting in URL parameters and form fields
 - **SQL injection detection**: Send test payloads to URL parameters and form fields, then check the response for SQL errors
+- **Time-based blind SQL injection detection**: Send payloads that delay the response, then confirm a repeatable delay against a baseline
 - **Form testing**: Discover HTML forms during crawling and test each field, using the form GET or POST method
 - **Open redirect detection**: Find open redirects in URL parameters
 - **Security header analysis**: Check for missing security headers (HSTS, CSP, X-Frame-Options, X-XSS-Protection, X-Content-Type-Options)
@@ -41,6 +42,7 @@ Or standalone with `python3 -m pysec.web_vuln_scanner https://example.com -o res
 - `-T, --threads`: Number of threads (default: 5)
 - `-a, --user-agent`: Custom User-Agent string
 - `-p, --payloads-dir`: Directory of custom payload files. Any file not present there falls back to the bundled default
+- `--sqli-delay`: Delay in seconds a time-based SQL injection payload should cause (default: 5)
 
 ## Custom Payloads
 
@@ -52,6 +54,7 @@ The scanner ships with a small default payload set as package data. Each detecti
 | `sqli_payloads.txt` | SQL injection payloads to inject |
 | `sql_errors.txt` | Response signatures that indicate a SQL error |
 | `open_redirect_payloads.txt` | Redirect payloads to inject |
+| `sqli_time_payloads.txt` | Time-based blind SQL injection payloads to inject |
 
 To use a larger set, put files with these names in a directory and pass it with `-p/--payloads-dir`. The scanner reads a file from that directory when it exists and falls back to the bundled default otherwise, so you can override one type without redefining the rest.
 
@@ -61,6 +64,7 @@ File format:
 - Blank lines and lines that start with `#` are ignored
 - In `xss_payloads.txt`, the token `__MARKER__` is replaced with a unique marker the scanner then looks for in the response, which keeps false positives low. Keep `__MARKER__` where you want that detectable value
 - In `open_redirect_payloads.txt`, the token `__HOST__` is replaced with the host the scanner confirms the redirect lands on
+- In `sqli_time_payloads.txt`, the token `__DELAY__` is replaced with the `--sqli-delay` value in seconds. Keep `__DELAY__` inside the sleep function so the scanner can measure the expected delay
 
 Larger community payload lists such as [SecLists](https://github.com/danielmiessler/SecLists) and [PayloadsAllTheThings](https://github.com/swisskyrepo/PayloadsAllTheThings) work well as a source. Add `__MARKER__` to XSS entries so reflection detection still applies.
 

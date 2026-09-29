@@ -2,6 +2,7 @@ import argparse
 import json
 import os
 import sys
+import time
 import urllib.parse
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
@@ -59,8 +60,10 @@ class WebVulnScanner:
     SQLI_PAYLOADS_FILE = "sqli_payloads.txt"
     SQL_ERRORS_FILE = "sql_errors.txt"
     OPEN_REDIRECT_PAYLOADS_FILE = "open_redirect_payloads.txt"
+    SQLI_TIME_PAYLOADS_FILE = "sqli_time_payloads.txt"
 
-    def __init__(self, url, output=None, cookies=None, threads=5, user_agent=None, payloads_dir=None):
+    def __init__(self, url, output=None, cookies=None, threads=5, user_agent=None,
+                 payloads_dir=None, sqli_delay=5):
         if not urlparse(url).scheme:
             url = "https://" + url
         parsed = urlparse(url)
@@ -87,6 +90,10 @@ class WebVulnScanner:
         self.sql_errors = load_payloads(self.SQL_ERRORS_FILE, payloads_dir)
         self.open_redirect_payloads = load_payloads(
             self.OPEN_REDIRECT_PAYLOADS_FILE, payloads_dir, {"__HOST__": self.OPEN_REDIRECT_HOST}
+        )
+        self.sqli_delay = sqli_delay
+        self.sqli_time_payloads = load_payloads(
+            self.SQLI_TIME_PAYLOADS_FILE, payloads_dir, {"__DELAY__": str(self.sqli_delay)}
         )
 
         # Set up cookies if provided
@@ -218,6 +225,7 @@ class WebVulnScanner:
         """Scan a single URL for multiple vulnerabilities"""
         self._check_xss(url)
         self._check_sql_injection(url)
+        self._check_sql_time(url)
         self._check_open_redirect(url)
 
     def _check_xss(self, url):
@@ -334,6 +342,73 @@ class WebVulnScanner:
                     print(f"[!] SQL injection vulnerability found at {url} in parameter {param}")
                     break
 
+    def _time_threshold(self):
+        """Elapsed-time cutoff, in seconds, that counts as a delayed (injected) response."""
+        tolerance = min(2.0, self.sqli_delay / 2)
+        return self.sqli_delay - tolerance
+
+    @staticmethod
+    def _time_confirms_injection(baseline, elapsed, confirm, threshold):
+        """Return True only when the first and the confirming request are both delayed."""
+        if elapsed is None or baseline is None:
+            return False
+        if elapsed < threshold or elapsed - baseline < threshold:
+            return False
+        return confirm is not None and confirm >= threshold
+
+    def _timed_request(self, url, params=None, data=None, post=False):
+        """Send one request and return how long it took in seconds, or None on error."""
+        request_timeout = self.sqli_delay + 10
+        start = time.monotonic()
+        try:
+            if post:
+                requests.post(url, data=data, cookies=self.cookies, headers=self.headers,
+                              timeout=request_timeout, allow_redirects=False)
+            else:
+                requests.get(url, params=params, cookies=self.cookies, headers=self.headers,
+                             timeout=request_timeout, allow_redirects=False)
+        except requests.Timeout:
+            return request_timeout
+        except Exception as e:
+            print(f"[-] Error during timing request to {url}: {e}")
+            return None
+        return time.monotonic() - start
+
+    def _check_sql_time(self, url):
+        """Check for time-based blind SQL injection in URL parameters."""
+        parsed_url = urlparse(url)
+        base_url = f"{parsed_url.scheme}://{parsed_url.netloc}{parsed_url.path}"
+        query_params = urllib.parse.parse_qs(parsed_url.query)
+
+        if not query_params:
+            return
+
+        threshold = self._time_threshold()
+        baseline_params = {name: values[0] for name, values in query_params.items()}
+        baseline = self._timed_request(base_url, params=baseline_params)
+        if baseline is None:
+            return
+
+        for param in query_params:
+            for payload in self.sqli_time_payloads:
+                test_params = dict(baseline_params)
+                test_params[param] = payload
+
+                elapsed = self._timed_request(base_url, params=test_params)
+                if elapsed is None or elapsed < threshold or elapsed - baseline < threshold:
+                    continue
+
+                confirm = self._timed_request(base_url, params=test_params)
+                if self._time_confirms_injection(baseline, elapsed, confirm, threshold):
+                    self.results["sqli"].append({
+                        "url": url,
+                        "parameter": param,
+                        "payload": payload,
+                        "details": f"Time-based blind SQL injection (response delayed ~{self.sqli_delay}s)"
+                    })
+                    print(f"[!] Time-based SQL injection found at {url} in parameter {param}")
+                    break
+
     def _check_open_redirect(self, url):
         """Check for open redirect vulnerabilities"""
         parsed_url = urlparse(url)
@@ -385,6 +460,7 @@ class WebVulnScanner:
         """Test a single form for XSS and SQL injection"""
         self._check_form_xss(form)
         self._check_form_sqli(form)
+        self._check_form_sql_time(form)
 
     def _submit_form(self, form, data):
         """Submit a form with the given field data and return the response, or None."""
@@ -450,6 +526,44 @@ class WebVulnScanner:
                         "details": f"Possible SQL injection in {form['method'].upper()} form field"
                     })
                     print(f"[!] SQL injection vulnerability found in form at {form['action']} in field {field}")
+                    break
+
+    def _check_form_sql_time(self, form):
+        """Check a form for time-based blind SQL injection."""
+        threshold = self._time_threshold()
+        post = form['method'] == 'post'
+
+        def timed(fields):
+            return self._timed_request(
+                form['action'],
+                params=None if post else fields,
+                data=fields if post else None,
+                post=post,
+            )
+
+        baseline = timed(dict(form['fields']))
+        if baseline is None:
+            return
+
+        for field in form['fields']:
+            for payload in self.sqli_time_payloads:
+                data = dict(form['fields'])
+                data[field] = payload
+
+                elapsed = timed(data)
+                if elapsed is None or elapsed < threshold or elapsed - baseline < threshold:
+                    continue
+
+                confirm = timed(data)
+                if self._time_confirms_injection(baseline, elapsed, confirm, threshold):
+                    self.results["sqli"].append({
+                        "url": form['action'],
+                        "parameter": field,
+                        "payload": payload,
+                        "details": f"Time-based blind SQL injection in {form['method'].upper()} "
+                                   f"form field (delayed ~{self.sqli_delay}s)"
+                    })
+                    print(f"[!] Time-based SQL injection found in form at {form['action']} in field {field}")
                     break
 
     def _check_security_headers(self):
@@ -523,8 +637,10 @@ def add_arguments(parser):
     parser.add_argument('-a', '--user-agent', help='Custom User-Agent string')
     parser.add_argument('-p', '--payloads-dir',
                         help='Directory of custom payload files (xss_payloads.txt, sqli_payloads.txt, '
-                             'sql_errors.txt, open_redirect_payloads.txt). Any file not present there '
-                             'falls back to the bundled default')
+                             'sql_errors.txt, open_redirect_payloads.txt, sqli_time_payloads.txt). Any file '
+                             'not present there falls back to the bundled default')
+    parser.add_argument('--sqli-delay', type=int, default=5,
+                        help='Delay in seconds a time-based SQL injection payload should cause (default: 5)')
 
 
 def run(args):
@@ -534,7 +650,8 @@ def run(args):
         cookies=args.cookies,
         threads=args.threads,
         user_agent=args.user_agent,
-        payloads_dir=args.payloads_dir
+        payloads_dir=args.payloads_dir,
+        sqli_delay=args.sqli_delay
     )
     scanner.scan()
 

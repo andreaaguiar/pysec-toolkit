@@ -22,7 +22,7 @@ PySec Toolkit is a set of Python security tools for network reconnaissance, pass
 | **Hash Cracker** | Dictionary-based hash cracking | • Multiple hash algorithms (MD5, SHA-1, SHA-256, SHA-512)<br>• Performance metrics<br>• Progress tracking |
 | **Directory Enumeration** | Web directory discovery | • Multiple file extension support<br>• Concurrent requests<br>• Status code analysis<br>• Results filtering |
 | **Subdomain Enumeration** | Subdomain discovery tool | • DNS enumeration<br>• Protocol selection (HTTP/HTTPS)<br>• Response analysis<br>• Title extraction |
-| **Web Vulnerability Scanner** | Web application security testing | • XSS detection<br>• SQL injection detection<br>• Open redirect testing<br>• Security header analysis<br>• Directory listing detection |
+| **Web Vulnerability Scanner** | Web application security testing | • XSS detection<br>• SQL injection detection (error and time-based blind)<br>• Open redirect testing<br>• Security header analysis<br>• Directory listing detection<br>• Custom payload sets |
 
 ## Requirements
 
@@ -156,7 +156,8 @@ pysec-toolkit/
 │           ├── xss_payloads.txt
 │           ├── sqli_payloads.txt
 │           ├── sql_errors.txt
-│           └── open_redirect_payloads.txt
+│           ├── open_redirect_payloads.txt
+│           └── sqli_time_payloads.txt
 ├── docs/
 │   ├── port-scanner.md
 │   ├── network-scanner.md
@@ -212,7 +213,7 @@ Planned features and improvements:
 - Implement automated reporting
 - Add GUI interface option
 - Grow the bundled vulnerability payload sets (custom sets already load with `--payloads-dir`)
-- Add boolean-based and time-based SQL injection detection
+- Add boolean-based SQL injection detection (time-based already supported)
 
 ## Contributing
 
