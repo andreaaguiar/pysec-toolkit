@@ -1,4 +1,4 @@
-import port_scanner
+from pysec import port_scanner
 
 
 def test_parse_ports_range():

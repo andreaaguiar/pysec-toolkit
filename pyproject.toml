@@ -1,0 +1,48 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pysec-toolkit"
+version = "0.1.0"
+description = "A collection of security assessment and penetration testing tools written in Python."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { file = "LICENSE" }
+authors = [{ name = "Andrea Aguiar" }]
+dependencies = [
+    "requests~=2.34.2",
+    "beautifulsoup4~=4.15.0",
+    "paramiko~=5.0.0",
+    "scapy~=2.7.0",
+    "tqdm~=4.70.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest~=9.1.1",
+    "ruff~=0.16.9",
+]
+
+[project.scripts]
+pysec = "pysec.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/andreaaguiar/pysec-toolkit"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+pysec = ["data/*.txt"]
+
+[tool.ruff]
+target-version = "py310"
+line-length = 120
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP"]
+ignore = ["E501"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

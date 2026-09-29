@@ -1,18 +1,7 @@
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent.parent
+SRC = Path(__file__).resolve().parent.parent / "src"
 
-TOOL_DIRS = [
-    "port-scanner",
-    "hash-cracker",
-    "directory-enumeration",
-    "subdomain-enumeration",
-    "web-vuln-scanner",
-    "ssh-brute-force",
-]
-
-for name in TOOL_DIRS:
-    sys.path.insert(0, str(ROOT / name))
-
-sys.path.insert(0, str(ROOT))
+if str(SRC) not in sys.path:
+    sys.path.insert(0, str(SRC))

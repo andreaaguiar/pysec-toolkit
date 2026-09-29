@@ -1,6 +1,6 @@
-import directory_enumeration
 import pytest
-import subdomain_enumeration
+
+from pysec import directory_enumeration, subdomain_enumeration
 
 MODULES = [directory_enumeration, subdomain_enumeration]
 

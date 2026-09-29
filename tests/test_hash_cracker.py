@@ -1,6 +1,6 @@
 import hashlib
 
-import hash_cracker
+from pysec import hash_cracker
 
 
 def test_validate_hash_valid_md5():
