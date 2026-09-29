@@ -139,3 +139,62 @@ def test_load_payloads_skips_blank_and_comment_lines(tmp_path):
     payload_file.write_text("# a comment\n\n' OR 1=1 --\n   \n# another\nUNION SELECT NULL\n")
     entries = load_payloads("sqli_payloads.txt", payloads_dir=str(tmp_path))
     assert entries == ["' OR 1=1 --", "UNION SELECT NULL"]
+
+
+def test_time_payloads_substitute_delay():
+    scanner = Scanner("https://example.com")
+    assert scanner.sqli_time_payloads
+    assert all("__DELAY__" not in p for p in scanner.sqli_time_payloads)
+    assert any("SLEEP(5)" in p for p in scanner.sqli_time_payloads)
+
+    custom = Scanner("https://example.com", sqli_delay=7)
+    assert any("SLEEP(7)" in p for p in custom.sqli_time_payloads)
+
+
+def test_time_threshold_scales_with_delay():
+    assert Scanner("https://example.com", sqli_delay=5)._time_threshold() == 3.0
+    assert Scanner("https://example.com", sqli_delay=10)._time_threshold() == 8.0
+    assert Scanner("https://example.com", sqli_delay=2)._time_threshold() == 1.0
+
+
+def test_time_confirms_injection_flags_consistent_delay():
+    assert Scanner._time_confirms_injection(baseline=0.2, elapsed=5.1, confirm=5.0, threshold=3.0)
+
+
+def test_time_confirms_injection_ignores_slow_but_uninjected_page():
+    assert not Scanner._time_confirms_injection(baseline=4.0, elapsed=4.2, confirm=4.2, threshold=3.0)
+
+
+def test_time_confirms_injection_requires_confirmation():
+    assert not Scanner._time_confirms_injection(baseline=0.2, elapsed=5.0, confirm=0.3, threshold=3.0)
+    assert not Scanner._time_confirms_injection(baseline=0.2, elapsed=5.0, confirm=None, threshold=3.0)
+
+
+def test_time_confirms_injection_handles_missing_timing():
+    assert not Scanner._time_confirms_injection(baseline=None, elapsed=5.0, confirm=5.0, threshold=3.0)
+    assert not Scanner._time_confirms_injection(baseline=0.2, elapsed=None, confirm=5.0, threshold=3.0)
+
+
+def test_check_sql_time_flags_delayed_parameter(monkeypatch):
+    scanner = Scanner("https://example.com")
+
+    def fake_timed(url, params=None, data=None, post=False):
+        value = (params or {}).get("id", "")
+        if any(marker in value for marker in ("SLEEP", "pg_sleep", "WAITFOR")):
+            return 5.2
+        return 0.1
+
+    monkeypatch.setattr(scanner, "_timed_request", fake_timed)
+    scanner._check_sql_time("https://example.com/item?id=1")
+
+    assert scanner.results["sqli"]
+    hit = scanner.results["sqli"][0]
+    assert hit["parameter"] == "id"
+    assert "Time-based" in hit["details"]
+
+
+def test_check_sql_time_ignores_fast_responses(monkeypatch):
+    scanner = Scanner("https://example.com")
+    monkeypatch.setattr(scanner, "_timed_request", lambda *a, **k: 0.1)
+    scanner._check_sql_time("https://example.com/item?id=1")
+    assert scanner.results["sqli"] == []

