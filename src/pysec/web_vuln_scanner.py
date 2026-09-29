@@ -42,6 +42,12 @@ class WebVulnScanner:
         "Microsoft SQL Native Client error",
         "PostgreSQL query failed",
     ]
+    OPEN_REDIRECT_HOST = "example.com"
+    OPEN_REDIRECT_PAYLOADS = [
+        f"//{OPEN_REDIRECT_HOST}",
+        f"https://{OPEN_REDIRECT_HOST}",
+        f"http://{OPEN_REDIRECT_HOST}",
+    ]
 
     def __init__(self, url, output=None, cookies=None, threads=5, user_agent=None):
         if not urlparse(url).scheme:
@@ -261,6 +267,13 @@ class WebVulnScanner:
                 return error
         return None
 
+    @staticmethod
+    def _redirect_targets_host(location, host):
+        """Return True if the Location header points at host, not merely contains it."""
+        if not location:
+            return False
+        return urlparse(location).hostname == host.lower()
+
     def _check_sql_injection(self, url):
         """Check for SQL injection vulnerabilities"""
         parsed_url = urlparse(url)
@@ -307,12 +320,6 @@ class WebVulnScanner:
         base_url = f"{parsed_url.scheme}://{parsed_url.netloc}{parsed_url.path}"
         query_params = urllib.parse.parse_qs(parsed_url.query)
 
-        redirect_payloads = [
-            "//example.com",
-            "https://example.com",
-            "http://example.com"
-        ]
-
         redirect_params = [
             "redirect", "url", "next", "goto", "target", "destination",
             "redirect_uri", "redirect_url", "returnUrl"
@@ -323,7 +330,7 @@ class WebVulnScanner:
             for param in query_params:
                 # Only test likely redirect parameters
                 if param.lower() in redirect_params or "redir" in param.lower() or "url" in param.lower():
-                    for payload in redirect_payloads:
+                    for payload in self.OPEN_REDIRECT_PAYLOADS:
                         test_params = query_params.copy()
                         test_params[param] = [payload]
 
@@ -341,7 +348,7 @@ class WebVulnScanner:
 
                             if response.status_code in [301, 302, 303, 307, 308]:
                                 location = response.headers.get('Location', '')
-                                if "example.com" in location:
+                                if self._redirect_targets_host(location, self.OPEN_REDIRECT_HOST):
                                     self.results["open_redirect"].append({
                                         "url": url,
                                         "parameter": param,
