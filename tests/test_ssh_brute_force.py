@@ -1,6 +1,6 @@
 import threading
 
-import ssh_brute_force
+from pysec import ssh_brute_force
 
 
 def test_attempt_login_success(monkeypatch):

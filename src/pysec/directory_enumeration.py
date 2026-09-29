@@ -9,6 +9,10 @@ from urllib.parse import urljoin
 import requests
 from bs4 import BeautifulSoup
 
+from pysec import data_path
+
+DEFAULT_WORDLIST = data_path("directory_wordlist.txt")
+
 
 def check_directory(base_url, directory, timeout, protocol, extensions, headers):
     """Attempt to connect to a directory and return the result"""
@@ -59,7 +63,7 @@ def extract_title(html):
 
 def add_arguments(parser):
     parser.add_argument('target', help='Target domain or URL to scan (e.g. example.com)')
-    parser.add_argument('-w', '--wordlist', default='wordlist.txt', help='Wordlist file containing directories to check')
+    parser.add_argument('-w', '--wordlist', default=DEFAULT_WORDLIST, help='Wordlist file containing directories to check')
     parser.add_argument('-T', '--threads', type=int, default=10, help='Number of concurrent threads (default: 10)')
     parser.add_argument('--timeout', type=float, default=3, help='Request timeout in seconds (default: 3)')
     parser.add_argument('-o', '--output', help='Save results to this file')

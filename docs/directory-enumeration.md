@@ -24,10 +24,10 @@
 - Requests library
 - BeautifulSoup library (for title extraction)
 
-Install dependencies with:
+Install the toolkit from the repository root, which pulls in requests and beautifulsoup4:
 
 ```bash
-pip3 install requests beautifulsoup4
+pip3 install -e .
 ```
 
 ## Usage
@@ -35,23 +35,23 @@ pip3 install requests beautifulsoup4
 Basic usage:
 
 ```bash
-python3 pysec.py dir target-domain.com
+pysec dir target-domain.com
 ```
 
 Extended usage with options:
 
 ```bash
-python3 pysec.py dir example.com -w custom_wordlist.txt -T 20 --https -x ".html,.php,.txt,/" -o results.txt -v
+pysec dir example.com -w custom_wordlist.txt -T 20 --https -x ".html,.php,.txt,/" -o results.txt -v
 ```
 
-Or standalone with `python3 directory-enumeration/directory_enumeration.py target-domain.com`.
+Or standalone with `python3 -m pysec.directory_enumeration target-domain.com`.
 
 ## Command-line Options
 
 | Option | Description | Default |
 |--------|-------------|---------|
 | `target` | Target domain or URL to scan (e.g., example.com) | Required |
-| `-w, --wordlist` | Wordlist file containing directories to check | wordlist.txt |
+| `-w, --wordlist` | Wordlist file containing directories to check | Bundled `directory_wordlist.txt` |
 | `-T, --threads` | Number of concurrent threads | 10 |
 | `--timeout` | Request timeout in seconds | 3 |
 | `-o, --output` | Save results to this file | None (results displayed in terminal) |
@@ -93,7 +93,7 @@ After completion:
 
 ## Creating a Wordlist
 
-A small starter `wordlist.txt` ships with the script, so the default command works without extra setup. It is only a sample. For real assessments, replace it with a large list.
+A small starter wordlist is bundled with the package and used by default, so the base command works without extra setup. It is only a sample. For real assessments, pass a large list with `-w`.
 
 For real directory discovery, use a large wordlist. You can:
 

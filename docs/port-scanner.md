@@ -22,13 +22,13 @@
 Through the toolkit command:
 
 ```bash
-python3 pysec.py port TARGET_IP [options]
+pysec port TARGET_IP [options]
 ```
 
 Or standalone:
 
 ```bash
-python3 port_scanner.py TARGET_IP [options]
+python3 -m pysec.port_scanner TARGET_IP [options]
 ```
 
 ### Command-line Options
@@ -46,19 +46,19 @@ python3 port_scanner.py TARGET_IP [options]
 Scan all ports on a target:
 
 ```bash
-python3 pysec.py port 192.168.1.6
+pysec port 192.168.1.6
 ```
 
 Scan specific port range with more threads:
 
 ```bash
-python3 pysec.py port 192.168.1.6 -p 1-1000 -T 200
+pysec port 192.168.1.6 -p 1-1000 -T 200
 ```
 
 Quick scan with shorter timeout:
 
 ```bash
-python3 pysec.py port 192.168.1.6 -p 1-1000 --timeout 0.2
+pysec port 192.168.1.6 -p 1-1000 --timeout 0.2
 ```
 
 ## How It Works

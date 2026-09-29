@@ -17,10 +17,10 @@
 - Python 3.10+
 - Paramiko library
 
-Install dependencies with:
+Install the toolkit from the repository root, which pulls in Paramiko:
 
 ```bash
-pip3 install paramiko
+pip3 install -e .
 ```
 
 ## Usage
@@ -28,16 +28,16 @@ pip3 install paramiko
 Run with prompts:
 
 ```bash
-python3 pysec.py ssh
+pysec ssh
 ```
 
 Or pass the details as flags:
 
 ```bash
-python3 pysec.py ssh 192.168.1.10 -u admin -w passwords.txt -T 8
+pysec ssh 192.168.1.10 -u admin -w passwords.txt -T 8
 ```
 
-Each tool also runs standalone, for example `python3 ssh-brute-force/ssh_brute_force.py 192.168.1.10 -u admin -w passwords.txt`.
+Each tool also runs standalone, for example `python3 -m pysec.ssh_brute_force 192.168.1.10 -u admin -w passwords.txt`.
 
 ### Command-line Options
 
@@ -56,7 +56,7 @@ Each tool also runs standalone, for example `python3 ssh-brute-force/ssh_brute_f
 
 When you run without flags, enter the target IP address, the username, and the path to your password file at the prompts.
 
-A small starter `passwords.txt` ships with the script for quick testing. It is only a sample. For real assessments, supply a large password list such as [SecLists](https://github.com/danielmiessler/SecLists/tree/master/Passwords).
+A small starter password list ships in `src/pysec/data/ssh_passwords.txt` for quick testing. It is only a sample. For real assessments, supply a large password list such as [SecLists](https://github.com/danielmiessler/SecLists/tree/master/Passwords).
 
 ## How It Works
 

@@ -8,6 +8,10 @@ from datetime import datetime
 import requests
 from bs4 import BeautifulSoup
 
+from pysec import data_path
+
+DEFAULT_WORDLIST = data_path("subdomain_wordlist.txt")
+
 
 def check_domain(subdomain, domain, timeout, protocol):
     """Attempt to connect to a subdomain and return the result"""
@@ -41,7 +45,7 @@ def extract_title(html):
 
 def add_arguments(parser):
     parser.add_argument('domain', help='Target domain to scan (e.g. example.com)')
-    parser.add_argument('-w', '--wordlist', default='wordlist.txt', help='Wordlist file containing subdomains to check')
+    parser.add_argument('-w', '--wordlist', default=DEFAULT_WORDLIST, help='Wordlist file containing subdomains to check')
     parser.add_argument('-T', '--threads', type=int, default=10, help='Number of concurrent threads (default: 10)')
     parser.add_argument('--timeout', type=float, default=5, help='Request timeout in seconds (default: 5)')
     parser.add_argument('-o', '--output', help='Save results to this file')

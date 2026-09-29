@@ -1,5 +1,6 @@
-import web_vuln_scanner
 from bs4 import BeautifulSoup
+
+from pysec import web_vuln_scanner
 
 MARKER = "pysecXSS31337"
 Scanner = web_vuln_scanner.WebVulnScanner

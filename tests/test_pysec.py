@@ -1,17 +1,15 @@
 import argparse
 
-import port_scanner
-
-import pysec
+from pysec import cli, port_scanner
 
 
 def test_dispatcher_lists_all_tools():
-    assert set(pysec.TOOLS) == {"port", "net", "ssh", "hash", "dir", "subdomain", "web"}
+    assert set(cli.TOOLS) == {"port", "net", "ssh", "hash", "dir", "subdomain", "web"}
 
 
 def test_every_tool_exposes_cli_interface():
-    for name, (relative_path, _help) in pysec.TOOLS.items():
-        module = pysec.load_tool(relative_path)
+    for name, (module_name, _help) in cli.TOOLS.items():
+        module = cli.load_tool(module_name)
         assert callable(getattr(module, "add_arguments", None)), f"{name} missing add_arguments"
         assert callable(getattr(module, "run", None)), f"{name} missing run"
 

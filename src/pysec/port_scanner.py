@@ -5,8 +5,7 @@ import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
 
-# Dictionary of common ports and their services
-common_services = {
+COMMON_SERVICES = {
     21: "FTP",
     22: "SSH",
     23: "Telnet",
@@ -84,7 +83,7 @@ def run(args):
 
             if is_open:
                 open_ports.append(port)
-                service = common_services.get(port, "Unknown")
+                service = COMMON_SERVICES.get(port, "Unknown")
                 print(f"Port {port} is open    [{service}]                ")
 
     print(f"\nStarting scan on {ip}")
@@ -93,7 +92,7 @@ def run(args):
     print("=" * 60)
 
     with ThreadPoolExecutor(max_workers=args.threads) as executor:
-        executor.map(scan_port, ports)
+        list(executor.map(scan_port, ports))
 
     elapsed_time = time.time() - start_time
 
@@ -104,7 +103,7 @@ def run(args):
         print("Open Ports Summary:")
         open_ports.sort()
         for port in open_ports:
-            service = common_services.get(port, "Unknown")
+            service = COMMON_SERVICES.get(port, "Unknown")
             print(f"Port {port}: {service}")
         print(f"Total: {len(open_ports)} open ports found")
     else:

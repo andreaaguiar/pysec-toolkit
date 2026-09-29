@@ -2,12 +2,18 @@
 __pycache__/
 *.py[cod]
 
+# Packaging artifacts
+*.egg-info/
+build/
+dist/
+
 # Virtual environments
 .venv/
 venv/
 
-# Pytest cache
+# Tool caches
 .pytest_cache/
+.ruff_cache/
 
 # macOS
 .DS_Store
