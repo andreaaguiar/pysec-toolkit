@@ -9,7 +9,7 @@
 - **Multithreaded** - Check many subdomains at once
 - **Protocol options** - Use HTTP, HTTPS, or both
 - **Progress tracking** - Show progress and request rate
-- **Result saving** - Save results to a file
+- **Report output** - Save results as a JSON or HTML report with `--report`
 - **Timeout control** - Set the request timeout
 - **User-agent customization** - Send a browser user-agent header
 - **Title extraction** - Show the page title for each valid subdomain
@@ -37,7 +37,7 @@ pysec subdomain example.com
 Extended usage with options:
 
 ```bash
-pysec subdomain example.com -w wordlist.txt -T 20 --both-protocols -o results.txt
+pysec subdomain example.com -w wordlist.txt -T 20 --both-protocols --report results.html
 ```
 
 Or standalone with `python3 -m pysec.subdomain_enumeration example.com`.
@@ -50,9 +50,10 @@ Or standalone with `python3 -m pysec.subdomain_enumeration example.com`.
 | `-w, --wordlist` | Wordlist file containing subdomains to check | Bundled `subdomain_wordlist.txt` |
 | `-T, --threads` | Number of concurrent threads | 10 |
 | `--timeout` | Request timeout in seconds | 5 |
-| `-o, --output` | Save results to this file | None (display in terminal) |
 | `--https` | Use HTTPS instead of HTTP | False (HTTP) |
 | `--both-protocols` | Check both HTTP and HTTPS | False |
+| `--report` | Write a JSON and/or HTML report to this path | None (display in terminal) |
+| `--report-format` | Report format: json, html, or both | Inferred from the path extension, else json |
 
 ## Output Example
 
@@ -73,7 +74,7 @@ After completion:
 ```bash
 [+] Enumeration completed in 22.35 seconds
 [+] Found 5 valid subdomains
-[+] Results saved to results.txt
+[+] Report written to results.html
 ```
 
 ## Creating a Wordlist

@@ -10,7 +10,7 @@
 - **Multithreading** - Run several attempts at once and stop on the first match
 - **Interactive or command-line use** - Enter details at the prompt or pass them as flags
 - **Resume support** - Continue from a given line in the password file
-- **Output file** - Save progress and the result to a file
+- **Report output** - Save the result as a JSON or HTML report with `--report`
 
 ## Requirements
 
@@ -50,9 +50,10 @@ Each tool also runs standalone, for example `python3 -m pysec.ssh_brute_force 19
 | `-T, --threads` | Number of threads | 4 |
 | `-d, --delay` | Delay between attempts in seconds | 0 |
 | `--timeout` | Connection timeout in seconds | 5 |
-| `-o, --output` | Save results to this file | None |
 | `--resume` | Resume from a line number in the password file | None |
 | `-v, --verbose` | Show each failed attempt | False |
+| `--report` | Write a JSON and/or HTML report to this path | None |
+| `--report-format` | Report format: json, html, or both | Inferred from the path extension, else json |
 
 When you run without flags, enter the target IP address, the username, and the path to your password file at the prompts.
 

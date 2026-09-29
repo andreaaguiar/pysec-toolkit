@@ -7,6 +7,8 @@ from datetime import datetime
 from scapy.all import ARP, Ether, conf, srp
 from tqdm import tqdm
 
+from pysec.report import ReportBuilder, add_report_arguments, write_report
+
 
 def add_arguments(parser):
     parser.add_argument('target', nargs='?', default='192.168.1.0/24',
@@ -15,10 +17,9 @@ def add_arguments(parser):
                         help='Network interface to use (default: auto-detect)')
     parser.add_argument('--timeout', type=float, default=2,
                         help='Timeout for responses in seconds (default: 2)')
-    parser.add_argument('-o', '--output', type=str,
-                        help='Save results to the specified file')
     parser.add_argument('-v', '--verbose', action='store_true',
                         help='Enable verbose output')
+    add_report_arguments(parser)
 
 def get_default_interface():
     """Auto-detect the default interface to use"""
@@ -109,29 +110,19 @@ def display_results(scan_results, verbose=False):
 
     print("=" * 50)
 
-def save_to_file(filename, scan_results):
-    """Save the scan results to a file"""
-    try:
-        with open(filename, 'w') as f:
-            f.write(f"Network Scan Results - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
-            f.write(f"Scan completed in {scan_results['scan_time']:.2f} seconds\n")
-            f.write(f"Found {scan_results['hosts_found']} active hosts\n\n")
-            f.write(f"{'IP Address':<16} {'MAC Address':<18}\n")
-            f.write("-" * 40 + "\n")
-
-            for host in scan_results['results']:
-                f.write(f"{host['ip']:<16} {host['mac']:<18}\n")
-
-        print(f"[+] Results saved to {filename}")
-    except Exception as e:
-        print(f"[!] Error saving results to file: {e}")
-
 def run(args):
+    report = ReportBuilder("net", args.target)
     interface = args.interface if args.interface else get_default_interface()
     scan_results = scan_network(interface, args.target, args.timeout)
     display_results(scan_results, args.verbose)
-    if args.output:
-        save_to_file(args.output, scan_results)
+
+    if getattr(args, "report", None):
+        built = report.build(
+            summary={"hosts_found": scan_results["hosts_found"], "interface": str(interface)},
+            findings=scan_results["results"],
+        )
+        for path in write_report(built, args.report, args.report_format):
+            print(f"[+] Report written to {path}")
 
 
 def main(argv=None):

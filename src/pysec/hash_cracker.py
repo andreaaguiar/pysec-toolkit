@@ -6,6 +6,8 @@ import os
 import sys
 import time
 
+from pysec.report import ReportBuilder, add_report_arguments, write_report
+
 # Define available hash algorithms
 HASH_TYPES = {
     'md5': hashlib.md5,
@@ -96,6 +98,7 @@ def add_arguments(parser):
     parser.add_argument('--type', default='md5', choices=HASH_TYPES.keys(),
                         help=f'Hash type to use. Default is md5. Available options: {", ".join(HASH_TYPES.keys())}')
     parser.add_argument('-i', '--interactive', action='store_true', help='Run in interactive mode')
+    add_report_arguments(parser)
 
 
 def run(args):
@@ -128,6 +131,7 @@ def run(args):
     print(f"Hash type: {hash_type}")
     print(f"Wordlist: {wordlist_path}")
 
+    report = ReportBuilder("hash", hash_to_crack)
     start_time = time.time()
     result = crack_hash(wordlist_path, hash_to_crack, hash_type)
     total_time = time.time() - start_time
@@ -139,6 +143,19 @@ def run(args):
         print("\nPassword not found in the wordlist.")
         print(f"Time taken: {total_time:.2f} seconds")
         print("Try with a different wordlist or hash type.")
+
+    if getattr(args, "report", None):
+        findings = [{"hash": hash_to_crack, "password": result}] if result else []
+        built = report.build(
+            summary={
+                "hash_type": hash_type,
+                "wordlist": wordlist_path,
+                "cracked": bool(result),
+            },
+            findings=findings,
+        )
+        for path in write_report(built, args.report, args.report_format):
+            print(f"[+] Report written to {path}")
 
 
 def main(argv=None):
