@@ -20,10 +20,10 @@
 - Requests library
 - BeautifulSoup library (for title extraction)
 
-Install dependencies with:
+Install the toolkit from the repository root, which pulls in requests and beautifulsoup4:
 
 ```bash
-pip3 install requests beautifulsoup4
+pip3 install -e .
 ```
 
 ## Usage
@@ -31,23 +31,23 @@ pip3 install requests beautifulsoup4
 Basic usage:
 
 ```bash
-python3 pysec.py subdomain example.com
+pysec subdomain example.com
 ```
 
 Extended usage with options:
 
 ```bash
-python3 pysec.py subdomain example.com -w wordlist.txt -T 20 --both-protocols -o results.txt
+pysec subdomain example.com -w wordlist.txt -T 20 --both-protocols -o results.txt
 ```
 
-Or standalone with `python3 subdomain-enumeration/subdomain_enumeration.py example.com`.
+Or standalone with `python3 -m pysec.subdomain_enumeration example.com`.
 
 ## Command-line Options
 
 | Option | Description | Default |
 |--------|-------------|---------|
 | `domain` | Target domain to scan (e.g., example.com) | Required |
-| `-w, --wordlist` | Wordlist file containing subdomains to check | wordlist.txt |
+| `-w, --wordlist` | Wordlist file containing subdomains to check | Bundled `subdomain_wordlist.txt` |
 | `-T, --threads` | Number of concurrent threads | 10 |
 | `--timeout` | Request timeout in seconds | 5 |
 | `-o, --output` | Save results to this file | None (display in terminal) |
@@ -78,7 +78,7 @@ After completion:
 
 ## Creating a Wordlist
 
-A small starter `wordlist.txt` ships with the script, so the default command works without extra setup. It is only a sample. For real assessments, replace it with a large list.
+A small starter wordlist is bundled with the package and used by default, so the base command works without extra setup. It is only a sample. For real assessments, pass a large list with `-w`.
 
 For real subdomain discovery, use a large wordlist. You can:
 

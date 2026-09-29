@@ -27,13 +27,9 @@ PySec Toolkit is a set of Python security tools for network reconnaissance, pass
 ## Requirements
 
 - Python 3.10+
-- Required Python packages:
 
-  - `requests` - For web-based tools
-  - `beautifulsoup4` - For HTML parsing in the web vulnerability scanner
-  - `paramiko` - For SSH operations
-  - `scapy` - For network scanning
-  - `tqdm` - For progress bars
+The runtime packages (`requests`, `beautifulsoup4`, `paramiko`, `scapy`, and
+`tqdm`) are declared in `pyproject.toml` and installed automatically.
 
 ## Installation
 
@@ -44,52 +40,59 @@ git clone https://github.com/andreaaguiar/pysec-toolkit.git
 cd pysec-toolkit
 ```
 
-Install dependencies:
+Install the package. The editable install (`-e`) lets you run the tools while
+you edit the source:
 
 ```bash
-pip3 install -r requirements.txt
+pip3 install -e .
 ```
+
+This adds a `pysec` command to your environment.
 
 ## Usage
 
 Run any tool through the `pysec` command, one subcommand per tool:
 
 ```bash
-python3 pysec.py <tool> [options]
+pysec <tool> [options]
 ```
 
 Examples:
 
 ```bash
-python3 pysec.py port 192.168.1.10 -p 1-1000
-python3 pysec.py net 192.168.1.0/24
-python3 pysec.py ssh 192.168.1.10 -u root -w passwords.txt
-python3 pysec.py hash -H <hash> -w wordlist.txt --type md5
-python3 pysec.py dir example.com -w wordlist.txt
-python3 pysec.py subdomain example.com -w wordlist.txt
-python3 pysec.py web https://example.com -o results.json
+pysec port 192.168.1.10 -p 1-1000
+pysec net 192.168.1.0/24
+pysec ssh 192.168.1.10 -u root -w passwords.txt
+pysec hash -H <hash> -w wordlist.txt --type md5
+pysec dir example.com
+pysec subdomain example.com
+pysec web https://example.com -o results.json
 ```
 
 The shared options mean the same thing across tools: the target is the first
 positional argument (where one applies), `-T/--threads` sets the thread count,
 `--timeout` sets the request timeout, `-o/--output` writes results to a file,
 `-w/--wordlist` gives the wordlist or password list, and `-v/--verbose` adds
-detail. Run `python3 pysec.py <tool> -h` for the full option list.
+detail. Run `pysec <tool> -h` for the full option list.
 
-Each tool also still runs on its own, for example
-`python3 port-scanner/port_scanner.py 192.168.1.10 -p 1-1000`.
+The directory and subdomain scanners fall back to a small bundled wordlist when
+you do not pass `-w/--wordlist`.
+
+Each tool also runs on its own as a module, for example
+`python3 -m pysec.port_scanner 192.168.1.10 -p 1-1000`. You can also run the
+toolkit with `python3 -m pysec <tool> [options]`.
 
 ## Documentation
 
 Each tool can be used independently and has its own detailed documentation. Please refer to the individual README files for usage instructions, examples, and additional information:
 
-- [Port Scanner Documentation](./port-scanner/README.md)
-- [Network Scanner Documentation](./network-scanner/README.md)
-- [SSH Brute Force Documentation](./ssh-brute-force/README.md)
-- [Hash Cracker Documentation](./hash-cracker/README.md)
-- [Directory Enumeration Documentation](./directory-enumeration/README.md)
-- [Subdomain Enumeration Documentation](./subdomain-enumeration/README.md)
-- [Web Vulnerability Scanner Documentation](./web-vuln-scanner/README.md)
+- [Port Scanner Documentation](./docs/port-scanner.md)
+- [Network Scanner Documentation](./docs/network-scanner.md)
+- [SSH Brute Force Documentation](./docs/ssh-brute-force.md)
+- [Hash Cracker Documentation](./docs/hash-cracker.md)
+- [Directory Enumeration Documentation](./docs/directory-enumeration.md)
+- [Subdomain Enumeration Documentation](./docs/subdomain-enumeration.md)
+- [Web Vulnerability Scanner Documentation](./docs/web-vuln-scanner.md)
 
 ## Security and Ethical Considerations
 
@@ -127,60 +130,61 @@ If you discover vulnerabilities using these tools:
 ## Project Structure
 
 ```bash
-PySec-Toolkit/
+pysec-toolkit/
 ├── .github/
 │   ├── workflows/
 │   │   ├── lint.yml
 │   │   └── tests.yml
 │   └── dependabot.yml
+├── src/
+│   └── pysec/
+│       ├── __init__.py
+│       ├── __main__.py
+│       ├── cli.py
+│       ├── port_scanner.py
+│       ├── network_scanner.py
+│       ├── ssh_brute_force.py
+│       ├── hash_cracker.py
+│       ├── directory_enumeration.py
+│       ├── subdomain_enumeration.py
+│       ├── web_vuln_scanner.py
+│       └── data/
+│           ├── directory_wordlist.txt
+│           ├── subdomain_wordlist.txt
+│           ├── hash_wordlist.txt
+│           └── ssh_passwords.txt
+├── docs/
+│   ├── port-scanner.md
+│   ├── network-scanner.md
+│   ├── ssh-brute-force.md
+│   ├── hash-cracker.md
+│   ├── directory-enumeration.md
+│   ├── subdomain-enumeration.md
+│   └── web-vuln-scanner.md
 ├── tests/
 │   ├── conftest.py
-│   ├── test_hash_cracker.py
+│   ├── test_pysec.py
 │   ├── test_port_scanner.py
+│   ├── test_network_scanner.py
 │   ├── test_ssh_brute_force.py
+│   ├── test_hash_cracker.py
+│   ├── test_directory_enumeration.py
+│   ├── test_subdomain_enumeration.py
 │   ├── test_title_extraction.py
 │   └── test_web_vuln_scanner.py
-├── port-scanner/
-│   ├── port_scanner.py
-│   └── README.md
-├── network-scanner/
-│   ├── network_scanner.py
-│   └── README.md
-├── ssh-brute-force/
-│   ├── ssh_brute_force.py
-│   ├── passwords.txt
-│   └── README.md
-├── hash-cracker/
-│   ├── hash_cracker.py
-│   ├── wordlist.txt
-│   └── README.md
-├── directory-enumeration/
-│   ├── directory_enumeration.py
-│   ├── wordlist.txt
-│   └── README.md
-├── subdomain-enumeration/
-│   ├── subdomain_enumeration.py
-│   ├── wordlist.txt
-│   └── README.md
-├── web-vuln-scanner/
-│   ├── web_vuln_scanner.py
-│   └── README.md
 ├── .gitignore
 ├── LICENSE
 ├── README.md
 ├── SECURITY.md
-├── pysec.py
-├── requirements-dev.txt
-├── requirements.txt
-└── ruff.toml
+└── pyproject.toml
 ```
 
 ## Development
 
-Install the development tools ([ruff](https://docs.astral.sh/ruff/) and pytest):
+Install the package with its development tools ([ruff](https://docs.astral.sh/ruff/) and pytest):
 
 ```bash
-pip3 install -r requirements-dev.txt
+pip3 install -e ".[dev]"
 ```
 
 Run the linter:
@@ -189,14 +193,13 @@ Run the linter:
 ruff check .
 ```
 
-Run the tests (they also need the runtime dependencies):
+Run the tests:
 
 ```bash
-pip3 install -r requirements.txt
 pytest
 ```
 
-GitHub Actions runs ruff and pytest on every push and pull request. The tests need Python 3.10 or newer.
+GitHub Actions runs ruff and pytest on every push and pull request. The tests run on Python 3.10 through 3.14.
 
 ## Future Development
 

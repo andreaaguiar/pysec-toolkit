@@ -20,10 +20,10 @@
 - Scapy library
 - tqdm library
 
-Install dependencies with:
+Install the toolkit from the repository root, which pulls in Scapy and tqdm:
 
 ```bash
-pip3 install scapy tqdm
+pip3 install -e .
 ```
 
 Note: Scapy may require additional dependencies based on your operating system.
@@ -31,10 +31,10 @@ Note: Scapy may require additional dependencies based on your operating system.
 ## Usage
 
 ```bash
-sudo python3 pysec.py net [RANGE] [-i INTERFACE] [--timeout TIMEOUT] [-o OUTPUT] [-v]
+sudo pysec net [RANGE] [-i INTERFACE] [--timeout TIMEOUT] [-o OUTPUT] [-v]
 ```
 
-Or standalone with `sudo python3 network_scanner.py [RANGE] ...`.
+Or standalone with `sudo python3 -m pysec.network_scanner [RANGE] ...`.
 
 ### Command Line Options
 

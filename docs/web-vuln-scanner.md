@@ -8,10 +8,10 @@
 - requests library (which includes urllib3)
 - beautifulsoup4 library
 
-Install dependencies with:
+Install the toolkit from the repository root, which pulls in requests and beautifulsoup4:
 
 ```bash
-pip3 install requests beautifulsoup4
+pip3 install -e .
 ```
 
 ## Features
@@ -28,10 +28,10 @@ pip3 install requests beautifulsoup4
 ## Usage
 
 ```bash
-python3 pysec.py web https://example.com -o results.json
+pysec web https://example.com -o results.json
 ```
 
-Or standalone with `python3 web-vuln-scanner/web_vuln_scanner.py https://example.com -o results.json`.
+Or standalone with `python3 -m pysec.web_vuln_scanner https://example.com -o results.json`.
 
 ### Options
 
@@ -54,7 +54,7 @@ Or standalone with `python3 web-vuln-scanner/web_vuln_scanner.py https://example
 Scan a website with custom cookies and save results:
 
 ```bash
-python3 pysec.py web https://example.com -c cookies.txt -o scan_results.json
+pysec web https://example.com -c cookies.txt -o scan_results.json
 ```
 
 ### Output Format
@@ -102,15 +102,15 @@ This tool can be used alongside the [CTF-Toolkit](https://github.com/andreaaguia
 
 ```bash
 # First, discover subdomains
-python3 ~/pysec-toolkit/pysec.py subdomain example.com -o subdomains.txt
+pysec subdomain example.com -o subdomains.txt
 
 # Scan each subdomain for vulnerabilities
 cat subdomains.txt | while read subdomain; do
-    python3 ~/pysec-toolkit/pysec.py web "https://$subdomain" -o "${subdomain}-vulns.json"
+    pysec web "https://$subdomain" -o "${subdomain}-vulns.json"
 done
 
 # Use directory enumeration for discovered vulnerable endpoints
-python3 ~/pysec-toolkit/pysec.py dir vulnerable-subdomain.example.com --https -o directories.txt
+pysec dir vulnerable-subdomain.example.com --https -o directories.txt
 ```
 
 ## Disclaimer

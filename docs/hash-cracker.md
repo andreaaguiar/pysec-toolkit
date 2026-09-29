@@ -25,7 +25,7 @@
 Run in interactive mode:
 
 ```bash
-python3 pysec.py hash -i
+pysec hash -i
 ```
 
 When prompted:
@@ -39,10 +39,10 @@ When prompted:
 Run with command-line arguments:
 
 ```bash
-python3 pysec.py hash -w /path/to/wordlist.txt -H <hash-to-crack> --type <hash-type>
+pysec hash -w /path/to/wordlist.txt -H <hash-to-crack> --type <hash-type>
 ```
 
-Or standalone with `python3 hash-cracker/hash_cracker.py -w ... -H ...`.
+Or standalone with `python3 -m pysec.hash_cracker -w ... -H ...`.
 
 #### Command-line Options
 
@@ -96,7 +96,7 @@ Time taken: 0.25 seconds
 
 ## Wordlist Resources
 
-A small starter `wordlist.txt` ships alongside the script for quick testing. It is only a sample. For real cracking, use one of the larger lists below.
+A small starter wordlist ships in `src/pysec/data/hash_wordlist.txt` for quick testing. It is only a sample. For real cracking, use one of the larger lists below.
 
 Good password wordlists for hash cracking:
 
