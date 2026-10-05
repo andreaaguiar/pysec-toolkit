@@ -14,7 +14,7 @@ dependencies = [
     "requests~=2.34.2",
     "beautifulsoup4~=4.15.0",
     "paramiko~=5.0.0",
-    "scapy~=2.7.0",
+    "scapy>=2.7,<2.9",
     "tqdm~=4.70.1",
 ]
 
