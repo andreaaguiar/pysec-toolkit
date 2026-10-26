@@ -13,7 +13,7 @@ authors = [{ name = "Andrea Aguiar" }]
 dependencies = [
     "requests~=2.34.2",
     "beautifulsoup4~=4.15.0",
-    "paramiko~=5.0.0",
+    "paramiko>=5.0,<5.2",
     "scapy~=2.7.0",
     "tqdm~=4.70.1",
 ]
